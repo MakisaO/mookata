@@ -1,0 +1,29 @@
+# Build output
+target/
+bin/
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Hibernate mapping files (generated)
+*.hbm.xml
+
+# Logs
+*.log
+
+# Maven wrapper jar
+!.mvn/wrapper/maven-wrapper.jar
