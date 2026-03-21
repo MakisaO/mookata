@@ -4,78 +4,113 @@
     <meta charset="UTF-8">
     <title>ฟอร์มจัดการโต๊ะ</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            padding: 20px; 
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f8;
         }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        select, input { padding: 8px; width: 200px; box-sizing: border-box; }
-        
-      
-        .btn, .btn-cancel {
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 40px; 
-            padding: 0 15px;
-            font-family: inherit;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
+
+        .page {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .card {
+            width: min(420px, 100%);
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 24px;
             box-sizing: border-box;
         }
 
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
         .btn {
+            padding: 10px 16px;
+            border: none;
             background: #28a745;
-            color: white;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 6px;
+            text-decoration: none;
         }
 
         .btn-cancel {
             background: #dc3545;
-            color: white;
-            margin-left: 10px;
         }
-        
 
-        .card { 
-            border: 1px solid #ddd; 
-            padding: 20px; 
-            width: 400px; 
-            border-radius: 8px; 
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); 
+        .btn-back {
+            background: #6c757d;
         }
     </style>
 </head>
 <body>
+    <div class="page">
+        <h1 th:text="${table.tableId == null ? 'เพิ่มโต๊ะใหม่' : 'แก้ไขสถานะโต๊ะ'}">ฟอร์มจัดการโต๊ะ</h1>
 
-    <h1 th:text="${table.tableId == null ? 'เพิ่มโต๊ะใหม่' : 'แก้ไขสถานะโต๊ะ'}">ฟอร์ม</h1>
-    
-    <div class="card">
-        <form th:action="${table.tableId == null ? '/tables/save' : '/tables/update/' + table.tableId}" 
-              th:object="${table}" method="post">
-            
-            <div class="form-group" th:if="${table.tableId != null}">
-                <label>หมายเลขโต๊ะ:</label>
-                <input type="text" th:field="*{tableId}" readonly style="background: #eee;">
-            </div>
-            
-            <div class="form-group">
-                <label>สถานะ (Status):</label>
-                <select th:field="*{status}" required>
-                    <option value="">-- เลือกสถานะ --</option>
-                    <option value="available">ว่าง (Available)</option>
-                    <option value="occupied">กำลังใช้งาน (Occupied)</option>
-                    <option value="reserved">จองแล้ว (Reserved)</option>
-                </select>
-            </div>
-            
-            <button type="submit" class="btn">💾 บันทึก</button>
-            <a th:href="@{/tables}" class="btn-cancel">❌ ยกเลิก</a>
-        </form>
+        <div class="card">
+            <form th:action="${table.tableId == null ? '/tables/save' : '/tables/update/' + table.tableId}"
+                  th:object="${table}" method="post">
+
+                <div class="form-group" th:if="${table.tableId != null}">
+                    <label>รหัสโต๊ะ</label>
+                    <input type="text" th:field="*{tableId}" readonly style="background: #eee;">
+                </div>
+
+                <div class="form-group">
+                    <label>สถานะ</label>
+                    <select th:field="*{status}" required>
+                        <option value="">เลือกสถานะ</option>
+                        <option value="available">ว่าง</option>
+                        <option value="unavailable">กำลังใช้งาน</option>
+                        <option value="reserved">จองแล้ว</option>
+                    </select>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn">บันทึก</button>
+                    <a th:href="@{/tables}" class="btn btn-cancel">ยกเลิก</a>
+                    <a th:href="@{/}" class="btn btn-back">ย้อนกลับ</a>
+                </div>
+            </form>
+        </div>
     </div>
-
 </body>
 </html>

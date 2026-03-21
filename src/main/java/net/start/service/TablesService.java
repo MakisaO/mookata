@@ -19,6 +19,10 @@ public class TablesService {
 		return tablesRepository.findAll();
 	}
 
+	public List<Tables> findByStatus(String status) {
+		return tablesRepository.findByStatus(status);
+	}
+
 	// Read: ดึงข้อมูลโต๊ะตาม ID
 	public Tables findById(int id) {
 		return tablesRepository.findById(id).orElseThrow();
