@@ -1,2 +1,28 @@
-	
-Index Page
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mookata SOA Project</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body { font-family: 'Tahoma', sans-serif; text-align: center; background-color: #f8f9fa; }
+        .container { margin-top: 50px; padding: 20px; border: 1px solid #ddd; display: inline-block; background: white; }
+        .btn { padding: 10px 20px; background-color: #ff5722; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ยินดีต้อนรับสู่ระบบร้านหมูกระทะ</h1>
+        <p>ยินดีต้อนรับคุณ: <span th:text="${userName}" style="font-weight: bold; color: blue;">Guest</span></p>
+        
+        <hr>
+        <h3>เมนูหลัก</h3>
+        <div style="margin-bottom: 20px;">
+            <a th:href="@{/tables}" class="btn">จัดการโต๊ะ</a>
+            <a th:href="@{/menu}" class="btn" style="background-color: #4CAF50;">ดูเมนูอาหาร</a>
+        </div>
+
+        <p>สถานะระบบ: <span th:text="${systemStatus}">Unknown</span></p>
+    </div>
+</body>
+</html>
