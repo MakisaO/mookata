@@ -19,6 +19,18 @@ bin/
 Thumbs.db
 .DS_Store
 
+# Secrets and Local Config
+.env
+.env.local
+.env.*.local
+*.properties.local
+application-local.properties
+.credentials/
+*.p12
+*.jks
+*.key
+*.pem
+
 # Hibernate mapping files (generated)
 *.hbm.xml
 
