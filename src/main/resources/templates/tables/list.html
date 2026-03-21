@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>จัดการโต๊ะ (Mookata)</title>
+    <!-- ใส่ CSS พื้นฐานง่ายๆ -->
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        table { width: 50%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .btn { padding: 8px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .btn-edit { background: #ffc107; color: black; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+
+    <h1>ระบบจัดการโต๊ะ (Tables)</h1>
+    
+    <a th:href="@{/tables/new}" class="btn">➕ เพิ่มโต๊ะใหม่</a>
+    
+    <br><br>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>หมายเลขโต๊ะ (ID)</th>
+                <th>สถานะ (Status)</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="table : ${tables}">
+                <td th:text="${table.tableId}">1</td>
+                <td>
+                	<span th:text="${table.status}">available</span>
+                </td>
+                <td>
+                    <a th:href="@{/tables/edit/{id}(id=${table.tableId})}" class="btn btn-edit">✏️ แก้ไขสถานะ</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

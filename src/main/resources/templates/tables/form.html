@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ฟอร์มจัดการโต๊ะ</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input { padding: 8px; width: 200px; }
+        .btn { padding: 8px 15px; border: none; background: #28a745; color: white; cursor: pointer; border-radius: 4px; }
+        .btn-cancel { background: #dc3545; text-decoration: none; color: white; padding: 8px 15px; display: inline-block; margin-left: 10px; border-radius: 4px;}
+        .card { border: 1px solid #ddd; padding: 20px; width: 400px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h1 th:text="${table.tableId == null ? 'เพิ่มโต๊ะใหม่' : 'แก้ไขสถานะโต๊ะ'}">ฟอร์ม</h1>
+    
+    <div class="card">
+        <!-- ฟอร์มจะ POST ไปที่ /tables/save ถ้าสร้างใหม่ หรือ /tables/update/{id} ถ้าแก้ไข -->
+        <form th:action="${table.tableId == null ? '/tables/save' : '/tables/update/' + table.tableId}" 
+              th:object="${table}" method="post">
+            
+            <div class="form-group" th:if="${table.tableId != null}">
+                <label>หมายเลขโต๊ะ:</label>
+                <input type="text" th:field="*{tableId}" readonly style="background: #eee;">
+            </div>
+            
+            <div class="form-group">
+                <label>สถานะ (Status):</label>
+                <select th:field="*{status}" required>
+                    <option value="">-- เลือกสถานะ --</option>
+                    <option value="available">ว่าง (Available)</option>
+                    <option value="occupied">กำลังใช้งาน (Occupied)</option>
+                    <option value="reserved">จองแล้ว (Reserved)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn">💾 บันทึก</button>
+            <a th:href="@{/tables}" class="btn-cancel">❌ ยกเลิก</a>
+        </form>
+    </div>
+
+</body>
+</html>
