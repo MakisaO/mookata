@@ -1,6 +1,7 @@
 package net.start.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import net.start.model.Product;
 import net.start.service.ProductService;
@@ -19,12 +21,22 @@ public class MenuController {
     @Autowired
     private ProductService productService;
 
-    // 1. Read: แสดงรายการเมนูทั้งหมด
+    // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้าและค้นหา
     @GetMapping("")
-    public String listMenu(Model model) {
-        model.addAttribute("products", productService.findAll());
+    public String listMenu(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            Model model) {
+        
+        int pageSize = 10;
+        Page<Product> productPage = productService.findPaginated(keyword, page, pageSize);
+        
+        model.addAttribute("products", productPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", productPage.getTotalPages());
+        model.addAttribute("totalItems", productPage.getTotalElements());
+        model.addAttribute("keyword", keyword);
 
-        // แก้จาก "menu/menu" เป็น "menu/list"
         return "menu/list";
     }
 

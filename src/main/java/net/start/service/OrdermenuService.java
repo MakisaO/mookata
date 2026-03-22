@@ -3,6 +3,8 @@ package net.start.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import net.start.dto.OrderItemSummary;
 import net.start.model.OrderDetail;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
@@ -80,5 +83,21 @@ public class OrdermenuService {
 	
 	public List<Ordermenu> getActiveOrdersByTable(Integer tableId) {
 	    return ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
+	}
+	
+	public List<OrderItemSummary> getAggregatedActiveOrders(Integer tableId) {
+	    List<Ordermenu> activeOrders = getActiveOrdersByTable(tableId);
+	    Map<Integer, OrderItemSummary> summaryMap = new LinkedHashMap<>();
+	    
+	    for (Ordermenu order : activeOrders) {
+	        for (OrderDetail detail : order.getOrderDetails()) {
+	            Product p = detail.getProduct();
+	            OrderItemSummary summary = summaryMap.computeIfAbsent(p.getProductId(), 
+	                k -> new OrderItemSummary(p, 0, detail.getUnitPrice()));
+	            summary.setQuantity(summary.getQuantity() + detail.getQuantity());
+	        }
+	    }
+	    
+	    return new ArrayList<>(summaryMap.values());
 	}
 }

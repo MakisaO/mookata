@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>ชำระเงินโต๊ะ - Mookata</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+body { background-color: #f8f9fa; font-family: 'Kanit', sans-serif; }
+.checkout-card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: none; }
+.header-bg { background: linear-gradient(135deg, #1976D2, #2196F3); color: white; border-radius: 15px 15px 0 0; }
+</style>
+</head>
+<body>
+<div class="container py-5" style="max-width: 800px;">
+    <div class="card checkout-card">
+        <div class="card-header header-bg p-4">
+            <h3 class="mb-0 text-center">🧾 ชำระเงิน ค่าอาหารโต๊ะ [[${tableId}]]</h3>
+        </div>
+        <div class="card-body p-4">
+            
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            
+            <h5 class="mb-3">รายการอาหารทั้งหมด</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>รายการที่สั่ง</th>
+                            <th>จำนวน</th>
+                            <th>ราคา/หน่วย</th>
+                            <th class="text-end">ราคารวม</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loop through all aggregated active orders of the table -->
+                        <tr th:each="summary : ${aggregatedOrders}">
+                            <td th:text="${summary.product.productName}">หมูสไลด์</td>
+                            <td th:text="${summary.quantity}">1</td>
+                            <td th:text="${summary.unitPrice} + ' ฿'">299 ฿</td>
+                            <td class="text-end fw-bold text-primary" th:text="${summary.totalPrice} + ' ฿'">299 ฿</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row mb-3">
+                <div class="col-6"><h5 class="text-muted">ยอดรวม:</h5></div>
+                <div class="col-6 text-end">
+                    <h5 th:text="${originalTotal} + ' บาท'">0.00 บาท</h5>
+                </div>
+            </div>
+
+            <!-- แสดงโปรโมชั่นที่มีในร้าน (ให้พนักงาน/ลูกค้ารู้ว่ามีอะไรเงื่อนไขแบบไหน) -->
+            <div class="row mb-3 mt-4" th:if="${not #lists.isEmpty(allPromotions)}">
+                <div class="col-12">
+                    <h6 class="text-muted mb-2">📢 โปรโมชั่นของทางร้าน (ระบบตรวจสอบอัตโนมัติ):</h6>
+                    <div class="card border-0 bg-light p-3 rounded-3">
+                        <ul class="mb-0 text-secondary" style="font-size: 0.9rem;">
+                            <li th:each="promo : ${allPromotions}">
+                                <span class="fw-bold" th:text="${promo.name}">ชื่อโปร</span> - 
+                                ยอดขั้นต่ำ <span th:text="${promo.minspend} + ' บาท'">500 บาท</span>
+                                <span th:if="${promo.type == 'discount'}">ลด <span th:text="${promo.value}">10</span> บาท</span>
+                                <span th:if="${promo.type == 'free_item'}">แถมฟรี <span th:text="${promo.freeProduct != null ? promo.freeProduct.productName : ''}">สินค้า</span></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3" th:if="${discount > 0 or not #lists.isEmpty(promoMessages)}">
+                <div class="col-12">
+                    <div class="alert alert-success py-2">
+                        <ul class="mb-0 ps-3">
+                            <li th:each="msg : ${promoMessages}" th:text="${msg}">ได้รับส่วนลด 10%</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-6"><h5 class="text-danger">ส่วนลดที่ได้รับ:</h5></div>
+                <div class="col-6 text-end">
+                    <h5 class="text-danger" th:text="'-' + ${discount} + ' บาท'">-0.00 บาท</h5>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row mb-4">
+                <div class="col-6"><h4>ยอดสุทธิที่ต้องชำระ:</h4></div>
+                <div class="col-6 text-end">
+                    <h3 class="text-primary fw-bold" th:text="${finalTotal} + ' บาท'">0.00 บาท</h3>
+                </div>
+            </div>
+
+            <form th:action="@{/payments/save/table/{id}(id=${tableId})}" method="post" id="paymentForm">
+                <input type="hidden" name="finalTotal" th:value="${finalTotal}">
+                <button class="btn btn-success btn-lg w-100 py-3 fw-bold" type="button" onclick="confirmPayment()">
+                    💸 ชำระเงินสำเร็จ
+                </button>
+                <a th:href="@{/tables}" class="btn btn-outline-secondary w-100 mt-2 py-2">กลับไปหน้าจัดการร้าน</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmPayment() {
+        Swal.fire({
+            title: 'ยืนยันการชำระเงิน?',
+            text: "โต๊ะนี้จะถูกล้างบิลและกลับเป็นโต๊ะว่างทันที",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ยืนยันชำระเงิน',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('paymentForm').submit();
+            }
+        });
+    }
+</script>
+</body>
+</html>

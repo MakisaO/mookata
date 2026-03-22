@@ -57,7 +57,7 @@ public class TablesController {
 		return "redirect:/tables";
 	}
 
-}
+
 
 	// Read: แสดงรายละเอียดโต๊ะ (ดูรายการอาหารที่สั่ง)
 	@GetMapping("/{id}")

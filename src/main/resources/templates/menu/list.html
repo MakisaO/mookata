@@ -25,14 +25,33 @@
         .btn-add { background-color: #4CAF50; margin-bottom: 20px; display: inline-block; }
         .btn-edit { background-color: #ff9800; }
         .btn-home { background-color: #607d8b; margin-top: 20px; display: inline-block; }
+        
+        .search-container { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+        .search-box { display: flex; gap: 10px; align-items: center; }
+        .search-input { padding: 9px; border: 1px solid #ddd; border-radius: 5px; width: 250px; font-size: 14px; }
+        .btn-search { background-color: #2196F3; margin: 0; display: inline-block; }
+        .btn-clear { background-color: #9e9e9e; margin: 0; display: inline-block; }
+        
+        .pagination { display: flex; list-style: none; padding: 0; justify-content: center; gap: 5px; margin-top: 30px; }
+        .page-item { margin: 0; }
+        .page-link { padding: 8px 14px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; font-size: 14px; }
+        .page-item.active .page-link { background-color: #ff5722; color: white; border-color: #ff5722; font-weight: bold; }
+        .page-item.disabled .page-link { color: #ccc; pointer-events: none; background-color: #f9f9f9;}
     </style>
 </head>
 <body>
     <div class="container">
         <h2>📋 รายการเมนูอาหารในร้าน</h2>
         
-        <a th:href="@{/menu/new}" class="btn btn-add">+ เพิ่มเมนูอาหารใหม่</a>
-        <table>
+        <div class="search-container">
+            <a th:href="@{/menu/new}" class="btn btn-add" style="margin-bottom:0;">+ เพิ่มเมนูอาหารใหม่</a>
+            
+            <form th:action="@{/menu}" method="get" class="search-box" id="searchForm">
+                <input type="text" name="keyword" class="search-input" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}">
+            </form>
+        </div>
+        
+        <table th:if="${totalItems > 0}">
             <thead>
                 <tr>
                     <th>ชื่อเมนู</th>
@@ -61,7 +80,48 @@
                 </tr>
             </tbody>
         </table>
+        
+        <div th:if="${totalItems == 0}" style="text-align: center; padding: 40px; color: #888; background: #f9f9f9; border-radius: 5px; margin-top: 20px;">
+            <p>ไม่พบรายการอาหารที่ค้นหา</p>
+        </div>
+        
+        <div th:if="${totalPages > 1}">
+            <ul class="pagination">
+                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                    <a class="page-link" th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword})}">« ก่อนหน้า</a>
+                </li>
+                
+                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
+                    th:classappend="${currentPage == i} ? 'active'">
+                    <a class="page-link" th:href="@{/menu(page=${i}, keyword=${keyword})}" th:text="${i}">1</a>
+                </li>
+                
+                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword})}">ถัดไป »</a>
+                </li>
+            </ul>
+        </div>
+        
         <a th:href="@{/}" class="btn btn-home">กลับหน้าหลัก</a>
     </div>
+
+    <script>
+        let timeout = null;
+        const searchInput = document.getElementById('searchInput');
+        if(searchInput) {
+            // Keep focus and put cursor at the end
+            const val = searchInput.value;
+            searchInput.focus();
+            searchInput.value = '';
+            searchInput.value = val;
+
+            searchInput.addEventListener('input', function (e) {
+                clearTimeout(timeout);
+                timeout = setTimeout(function () {
+                    document.getElementById('searchForm').submit();
+                }, 200); // 200ms debounce
+            });
+        }
+    </script>
 </body>
 </html>

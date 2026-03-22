@@ -48,6 +48,10 @@
             <a th:href="@{/tables/edit/{id}(id=${t.tableId})}" class="btn btn-edit">
                 ⚙️ แก้ไขสถานะ
             </a>
+
+            <a th:if="${t.status != 'available'}" th:href="@{/payments/checkout/table/{id}(id=${t.tableId})}" class="btn btn-success" style="background-color: #4CAF50;">
+                💸 ชำระเงิน
+            </a>
         </div>
     </div>
 </div>

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import net.start.dto.OrderItemSummary;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
 import net.start.model.Tables;
@@ -49,8 +50,8 @@ public class OrderController {
 	    model.addAttribute("selectedTableId", id);
 	    model.addAttribute("products", productService.findAvailable());
 	    
-	    List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(id);
-	    model.addAttribute("pastOrders", activeOrders);
+	    List<OrderItemSummary> aggregatedOrders = ordermenuService.getAggregatedActiveOrders(id);
+	    model.addAttribute("aggregatedOrders", aggregatedOrders);
 	    
 	    return "orders/form";
 	}
