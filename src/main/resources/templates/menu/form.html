@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>บันทึกข้อมูลเมนู - Mookata</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f7f6; margin: 0; }
+        .form-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 350px; }
+        h3 { text-align: center; color: #333; margin-top: 0; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        label { font-weight: bold; color: #555; }
+        
+        .btn-save { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .btn-save:hover { background-color: #45a049; }
+        
+        /* สไตล์ปุ่มลบในหน้าฟอร์ม */
+        .btn-delete-form { 
+            display: block; width: 100%; padding: 12px; background-color: #f44336; color: white; 
+            text-align: center; text-decoration: none; border-radius: 5px; font-size: 16px; 
+            box-sizing: border-box; margin-top: 10px; 
+        }
+        .btn-delete-form:hover { background-color: #d32f2f; }
+        
+        .back-link { display: block; text-align: center; margin-top: 15px; color: #666; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h3>📝 ข้อมูลเมนู</h3>
+        
+        <form th:action="${product.productId == null ? '/menu/save' : '/menu/update/' + product.productId}" th:object="${product}" method="post">
+            
+            <input type="hidden" th:field="*{productId}" />
+            
+            <label>ชื่อเมนูอาหาร:</label>
+            <input type="text" th:field="*{productName}" placeholder="เช่น สามชั้นสไลด์" required />
+            
+            <label>ราคา (บาท):</label>
+            <input type="number" step="0.01" th:field="*{productPrice}" placeholder="0.00" required />
+            
+            <label>สถานะสินค้า:</label>
+    			<select th:field="*{productStatus}">
+        			<option value="available">พร้อมขาย</option>
+        			<option value="unavailable">หมด</option>
+    			</select>
+            
+            <button type="submit" class="btn-save">บันทึกข้อมูล</button>
+
+            <div th:if="${product.productId != null}">
+                <a th:href="@{/menu/delete/{id}(id=${product.productId})}" 
+                   class="btn-delete-form" 
+                   onclick="return confirm('⚠️ ยืนยันการลบเมนูนี้ออกจากระบบ?')">ลบเมนูนี้</a>
+            </div>
+        </form>
+        
+        <a href="/menu" class="back-link">ยกเลิกและกลับหน้าหลัก</a>
+    </div>
+</body>
+</html>

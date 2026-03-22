@@ -1,2 +1,71 @@
-	
-Index Page
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mookata SOA Project</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            padding: 28px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            background: white;
+            width: min(720px, 100%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .menu-grid {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .btn-menu {
+            background-color: #4CAF50;
+        }
+
+        .btn-order {
+            background-color: #1f7aec;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ยินดีต้อนรับสู่ระบบร้านหมูกระทะ</h1>
+        <p>ยินดีต้อนรับคุณ: <span th:text="${userName}" style="font-weight: bold; color: blue;">Guest</span></p>
+
+        <hr>
+        <h3>เมนูหลัก</h3>
+        <div class="menu-grid">
+            <a th:href="@{/tables}" class="btn">จัดการโต๊ะ</a>
+            <a th:href="@{/menu}" class="btn btn-menu">ดูเมนูอาหาร</a>
+            <a th:href="@{/orders/new}" class="btn btn-order">สั่งเมนู</a>
+        </div>
+
+        <p>สถานะระบบ: <span th:text="${systemStatus}">Unknown</span></p>
+    </div>
+</body>
+</html>

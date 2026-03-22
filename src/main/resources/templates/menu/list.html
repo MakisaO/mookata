@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>จัดการเมนูอาหาร - Mookata</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; padding: 30px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
+        th { background-color: #ff5722; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; color: white; font-size: 14px; }
+        .btn-add { background-color: #4CAF50; margin-bottom: 20px; display: inline-block; }
+        .btn-edit { background-color: #ff9800; }
+        .btn-home { background-color: #607d8b; margin-top: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📋 รายการเมนูอาหารในร้าน</h2>
+        
+        <a th:href="@{/menu/new}" class="btn btn-add">+ เพิ่มเมนูอาหารใหม่</a>
+        <table>
+            <thead>
+                <tr>
+                    <th>ชื่อเมนู</th>
+                    <th>ราคา (บาท)</th>
+                    <th>สถานะ</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="p : ${products}">
+                    <td th:text="${p.productName}" style="text-align: left;">ชุดหมูรวมมิตร</td>
+                    <td th:text="${p.productPrice}">299</td>
+                    <td th:text="${p.productStatus}">พร้อมขาย</td>
+                    <td>
+                        <a th:href="@{/menu/edit/{id}(id=${p.productId})}" class="btn btn-edit">แก้ไข</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <a th:href="@{/}" class="btn btn-home">กลับหน้าหลัก</a>
+    </div>
+</body>
+</html>
