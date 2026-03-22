@@ -3,6 +3,8 @@ package net.start.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import net.start.dto.OrderItemSummary;
 import net.start.model.OrderDetail;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
@@ -91,21 +94,36 @@ public class OrdermenuService {
 	    return ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
 	}
 	
-	public List<Ordermenu> getPaidOrderHistory() {
+	public List<OrderItemSummary> getAggregatedActiveOrders(Integer tableId) {
+        List<Ordermenu> activeOrders = getActiveOrdersByTable(tableId);
+        Map<Integer, OrderItemSummary> summaryMap = new LinkedHashMap<>();
+        
+        for (Ordermenu order : activeOrders) {
+            for (OrderDetail detail : order.getOrderDetails()) {
+                Product p = detail.getProduct();
+                OrderItemSummary summary = summaryMap.computeIfAbsent(p.getProductId(), 
+                    k -> new OrderItemSummary(p, 0, detail.getUnitPrice()));
+                summary.setQuantity(summary.getQuantity() + detail.getQuantity());
+            }
+        }
+        return new ArrayList<>(summaryMap.values());
+    }
+
+    public List<Ordermenu> getPaidOrderHistory() {
         return ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
     }
-	
-	public BigDecimal calculateGrandTotal(List<Ordermenu> completedOrders) {
+    
+    public BigDecimal calculateGrandTotal(List<Ordermenu> completedOrders) {
         return completedOrders.stream()
                 .map(Ordermenu::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-	
-	public Map<String, Integer> getGroupedDetails(Ordermenu order) {
-	    return order.getOrderDetails().stream()
-	            .collect(Collectors.groupingBy(
-	                detail -> detail.getProduct().getProductName(),
-	                Collectors.summingInt(OrderDetail::getQuantity)
-	            ));
-	}
+    
+    public Map<String, Integer> getGroupedDetails(Ordermenu order) {
+        return order.getOrderDetails().stream()
+                .collect(Collectors.groupingBy(
+                    detail -> detail.getProduct().getProductName(),
+                    Collectors.summingInt(OrderDetail::getQuantity)
+                ));
+    }
 }
