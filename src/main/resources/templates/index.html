@@ -1,49 +1,140 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="th">
 <head>
-    <meta charset="UTF-8">
-    <title>Restaurant Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .home-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-        .btn-custom {
-            width: 250px;
-            padding: 20px;
-            font-size: 1.2rem;
-            border-radius: 15px;
-            transition: transform 0.2s;
-        }
-        .btn-custom:hover {
-            transform: scale(1.05);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Star MooKaTa - POS System</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+body {
+	background-color: #f8f9fa;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.home-container {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 2rem 0;
+}
+
+.dashboard-grid {
+	max-width: 900px;
+	width: 100%;
+}
+
+.btn-dashboard {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem;
+	border-radius: 20px;
+	text-decoration: none;
+	color: white;
+	transition: all 0.3s ease;
+	height: 100%;
+	border: none;
+}
+
+.btn-dashboard:hover {
+	transform: translateY(-5px) scale(1.03);
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15) !important;
+	color: white;
+}
+
+.btn-dashboard i {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.btn-dashboard span {
+	font-size: 1.25rem;
+	font-weight: 600;
+}
+
+/* Custom Colors */
+.bg-tables {
+	background-color: #0d6efd;
+} /* Blue */
+.bg-menu {
+	background-color: #fd7e14;
+} /* Orange */
+.bg-kitchen {
+	background-color: #dc3545;
+} /* Red */
+.bg-promo {
+	background-color: #6f42c1;
+} /* Purple */
+.bg-history {
+	background-color: #495057;
+} /* Slate/Gray */
+.bg-summary {
+	background-color: #198754;
+} /* Green */
+</style>
 </head>
-<body class="bg-light">
+<body>
+	<div class="container home-container">
+		<div class="text-center mb-5">
+			<h1 class="fw-bold text-dark">The Star MooKaTa</h1>
+			<p class="text-muted fs-5">ระบบจัดการร้านอาหารและจุดชำระเงิน
+				(POS)</p>
+		</div>
 
-    <div class="container home-container">
-        <h1 class="mb-4">ยินดีต้อนรับสู่ระบบร้าน The Star MooKaTa</h1>
-        
-        <div class="d-grid gap-3 d-md-block text-center">
-            <a th:href="@{/tables}" class="btn btn-primary btn-custom shadow">
-                <i class="bi bi-shop"></i> จัดการร้านค้า (โต๊ะ)
-            </a>
+		<div class="dashboard-grid">
+			<div class="row g-4">
+				<!-- จัดการร้านค้า (โต๊ะและออเดอร์) -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/tables}" class="btn-dashboard bg-tables shadow">
+						<i class="bi bi-shop"></i> <span>จัดการร้านค้า</span>
+					</a>
+				</div>
 
-            <a th:href="@{/menu}" class="btn btn-success btn-custom shadow">
-                <i class="bi bi-book"></i> ดูเมนูอาหาร
-            </a>
-            
-            <a th:href="@{/kitchen}" class="btn btn-warning btn-custom shadow text-white">
-                <i class="bi bi-fire"></i> ห้องครัว (ออเดอร์)
-            </a>
-        </div>
-    </div>
+				<!-- จัดการเมนูอาหาร -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/menu}" class="btn-dashboard bg-menu shadow"> <i
+						class="bi bi-book"></i> <span>จัดการเมนู</span>
+					</a>
+				</div>
 
+				<!-- ห้องครัว -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/kitchen}" class="btn-dashboard bg-kitchen shadow">
+						<i class="bi bi-fire"></i> <span>ห้องครัว (ออเดอร์)</span>
+					</a>
+				</div>
+
+				<!-- จัดการโปรโมชั่น -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/promotion}" class="btn-dashboard bg-promo shadow">
+						<i class="bi bi-tags"></i> <span>จัดการโปรโมชั่น</span>
+					</a>
+				</div>
+
+				<!-- ประวัติบิล -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/payment/history}"
+						class="btn-dashboard bg-history shadow"> <i
+						class="bi bi-clock-history"></i> <span>ประวัติบิล</span>
+					</a>
+				</div>
+
+				<!-- สรุปยอดขาย -->
+				<div class="col-md-4 col-sm-6">
+					<a th:href="@{/summary}" class="btn-dashboard bg-summary shadow">
+						<i class="bi bi-bar-chart-line"></i> <span>สรุปยอดขาย</span>
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
 </body>
-
+</html>
