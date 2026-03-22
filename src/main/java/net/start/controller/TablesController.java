@@ -47,7 +47,7 @@ public class TablesController {
 		model.addAttribute("table", existingTable);
 		return "tables/form";
 	}
-	
+
 	// Update: อัปเดตข้อมูล (ทำงานผ่าน URL /save เหมือน Create ได้เลย หรือแยกก็ได้)
 	@PostMapping("/update/{id}")
 	public String updateTable(@PathVariable("id") int id, @ModelAttribute("table") Tables tableDetails) {
@@ -55,6 +55,16 @@ public class TablesController {
 		existingTable.setStatus(tableDetails.getStatus());
 		tablesService.save(existingTable);
 		return "redirect:/tables";
+	}
+
+}
+
+	// Read: แสดงรายละเอียดโต๊ะ (ดูรายการอาหารที่สั่ง)
+	@GetMapping("/{id}")
+	public String showTableDetails(@PathVariable("id") int id, Model model) {
+		Tables existingTable = tablesService.findById(id);
+		model.addAttribute("table", existingTable);
+		return "tables/detail";
 	}
 
 }

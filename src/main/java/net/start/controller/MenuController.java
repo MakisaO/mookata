@@ -23,9 +23,9 @@ public class MenuController {
     @GetMapping("")
     public String listMenu(Model model) {
         model.addAttribute("products", productService.findAll());
-        
+
         // แก้จาก "menu/menu" เป็น "menu/list"
-        return "menu/list"; 
+        return "menu/list";
     }
 
     // 2. Create: แสดงหน้าฟอร์มเพิ่มเมนูใหม่
@@ -33,7 +33,7 @@ public class MenuController {
     public String showCreateForm(Model model) {
         model.addAttribute("product", new Product());
         // ต้องมีไฟล์ที่: src/main/resources/templates/menu/form.html
-        return "menu/form"; 
+        return "menu/form";
     }
 
     // 3. Create/Save: รับข้อมูลจากฟอร์มและบันทึกลงฐานข้อมูล
@@ -50,22 +50,22 @@ public class MenuController {
         model.addAttribute("product", existingProduct);
         return "menu/form"; // ใช้ไฟล์ form.html ร่วมกัน
     }
-    
+
     // 5. Update/Save: รับข้อมูลการแก้ไขและบันทึกทับ
     @PostMapping("/update/{id}")
     public String updateMenu(@PathVariable("id") int id, @ModelAttribute("product") Product productDetails) {
         Product existingProduct = productService.findById(id);
-        
+
         // แก้ให้ตรงกับ Product.java
         existingProduct.setProductName(productDetails.getProductName());
         existingProduct.setProductPrice(productDetails.getProductPrice());
         existingProduct.setProductStatus(productDetails.getProductStatus());
         existingProduct.setProductDetail(productDetails.getProductDetail());
-        
+
         productService.save(existingProduct);
         return "redirect:/menu";
     }
- // เพิ่มตัวนี้ใน MenuController.java
+    // เพิ่มตัวนี้ใน MenuController.java
 
     @GetMapping("/delete/{id}")
     public String deleteMenu(@PathVariable("id") int id) {

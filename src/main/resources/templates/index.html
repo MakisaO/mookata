@@ -69,3 +69,47 @@
     </div>
 </body>
 </html>
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-store {
+            background: linear-gradient(135deg, #ff5722, #f44336);
+        }
+
+        .btn-menu {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+        
+        .btn-promo {
+            background: linear-gradient(135deg, #2196F3, #1565C0);
+            width: 100%;
+            max-width: 420px;
+            margin-top: 10px;
+        }
+
+        .status-text {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="logo">The Star หมูกะทะ</h1>
+        <p class="welcome-text">ยินดีต้อนรับคุณ: <span th:text="${userName != null ? userName : 'ผู้จัดการร้าน'}" style="font-weight: 600; color: #d32f2f;">ผู้จัดการร้าน</span></p>
+
+        <hr>
+        
+        <div class="menu-grid">
+            <a th:href="@{/tables}" class="btn btn-store">จัดการเรื่องโต๊ะ</a>
+            <a th:href="@{/menu}" class="btn btn-menu">จัดการเมนูอาหาร</a>
+            <a th:href="@{/promotions}" class="btn btn-promo">จัดการโปรโมชัน</a>
+        </div>
+
+        <p class="status-text">สถานะระบบ: <span th:text="${systemStatus != null ? systemStatus : 'ออนไลน์'}">ออนไลน์</span></p>
+    </div>
+</body>
+</html>
