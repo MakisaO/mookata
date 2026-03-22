@@ -1,8 +1,10 @@
 package net.start.controller;
 
+import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import net.start.dto.OrderItemSummary;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
 import net.start.model.Tables;
@@ -45,16 +46,33 @@ public class OrderController {
 		return "orders/form";
 	}
 	
+	@GetMapping("/history")
+	public String showOrderHistory(Model model) {
+	    List<Ordermenu> history = ordermenuService.getPaidOrderHistory();
+	    BigDecimal grandTotal = ordermenuService.calculateGrandTotal(history);
+
+	    // สร้าง Map สำหรับเก็บข้อมูลที่ Group แล้วของทุก Order ในหน้านี้
+	    Map<Integer, Map<String, Integer>> summaryMap = history.stream().collect(Collectors.toMap(Ordermenu::getOrderId, order -> ordermenuService.getGroupedDetails(order)
+	        ));
+
+	    model.addAttribute("orders", history);
+	    model.addAttribute("grandTotal", grandTotal);
+	    model.addAttribute("summaryMap", summaryMap);
+
+	    return "orders/history";
+	}
+	
 	@GetMapping("/{id}")
 	public String showOrderFormByTable(@PathVariable("id") Integer id, Model model) {
 	    model.addAttribute("selectedTableId", id);
 	    model.addAttribute("products", productService.findAvailable());
 	    
-	    List<OrderItemSummary> aggregatedOrders = ordermenuService.getAggregatedActiveOrders(id);
-	    model.addAttribute("aggregatedOrders", aggregatedOrders);
+	    List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(id);
+	    model.addAttribute("pastOrders", activeOrders);
 	    
 	    return "orders/form";
 	}
+	
 
 	@PostMapping("/save")
 	public String saveOrder(@RequestParam("tableId") Integer tableId,
@@ -89,6 +107,6 @@ public class OrderController {
 			redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
 		}
 
-		return "redirect:/orders/new";
+		return "redirect:/orders/" + tableId;
 	}
 }

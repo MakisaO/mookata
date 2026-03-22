@@ -3,16 +3,14 @@ package net.start.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import net.start.dto.OrderItemSummary;
 import net.start.model.OrderDetail;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
@@ -39,65 +37,75 @@ public class OrdermenuService {
 
 	@Transactional
 	public Ordermenu createOrder(Integer tableId, Map<Integer, Integer> quantities) {
-		Tables table = tablesRepository.findById(tableId).orElse(null);
+	    Tables table = tablesRepository.findById(tableId)
+	            .orElseThrow(() -> new IllegalArgumentException("ไม่พบโต๊ะที่ระบุ"));
 
-		Ordermenu ordermenu = new Ordermenu();
-		ordermenu.setTables(table);
-		ordermenu.setOrderDate(Timestamp.from(Instant.now()));
-		ordermenu.setOrderStatus("pending");
-		ordermenu.setTotalAmount(BigDecimal.ZERO);
-		ordermenu = ordermenuRepository.save(ordermenu);
+	    Ordermenu ordermenu;
 
-		BigDecimal totalAmount = BigDecimal.ZERO;
-		boolean hasItem = false;
+	    if ("available".equalsIgnoreCase(table.getStatus())) {
+	        ordermenu = new Ordermenu();
+	        ordermenu.setTables(table);
+	        ordermenu.setOrderDate(Timestamp.from(Instant.now()));
+	        ordermenu.setOrderStatus("pending");
+	        ordermenu.setTotalAmount(BigDecimal.ZERO);
+	        
+	        table.setStatus("unavailable");
+	        tablesRepository.save(table);
+	        
+	        ordermenu = ordermenuRepository.save(ordermenu);
+	    } else {
+	        ordermenu = ordermenuRepository.findFirstByTables_TableIdAndOrderStatusNotOrderByOrderDateDesc(tableId, "paid")
+	                .orElseThrow(() -> new IllegalArgumentException("ไม่พบออเดอร์เดิมที่ค้างอยู่ของโต๊ะนี้"));
+	    }
 
-		for (Map.Entry<Integer, Integer> entry : quantities.entrySet()) {
-			Integer quantity = entry.getValue();
-			if (quantity == null || quantity <= 0) {
-				continue;
-			}
+	    BigDecimal currentTotal = ordermenu.getTotalAmount();
+	    boolean hasItem = false;
 
-			Product product = productRepository.findById(entry.getKey()).orElseThrow();
+	    for (Map.Entry<Integer, Integer> entry : quantities.entrySet()) {
+	        Integer quantity = entry.getValue();
+	        if (quantity == null || quantity <= 0) continue;
 
-			OrderDetail detail = new OrderDetail();
-			detail.setOrdermenu(ordermenu);
-			detail.setProduct(product);
-			detail.setQuantity(quantity);
-			detail.setUnitPrice(product.getProductPrice());
-			detail.setItemStatus("ordered");
-			orderDetailRepository.save(detail);
+	        Product product = productRepository.findById(entry.getKey()).orElseThrow();
 
-			totalAmount = totalAmount.add(product.getProductPrice().multiply(BigDecimal.valueOf(quantity)));
-			hasItem = true;
-		}
+	        OrderDetail detail = new OrderDetail();
+	        detail.setOrdermenu(ordermenu);
+	        detail.setProduct(product);
+	        detail.setQuantity(quantity);
+	        detail.setUnitPrice(product.getProductPrice());
+	        detail.setItemStatus("ordered");
+	        orderDetailRepository.save(detail);
 
-		if (!hasItem) {
-			throw new IllegalArgumentException("กรุณาเลือกเมนูอย่างน้อย 1 รายการ");
-		}
+	        currentTotal = currentTotal.add(product.getProductPrice().multiply(BigDecimal.valueOf(quantity)));
+	        hasItem = true;
+	    }
 
-		ordermenu.setTotalAmount(totalAmount);
-		table.setStatus("unavailable");
-		tablesRepository.save(table);
-		return ordermenuRepository.save(ordermenu);
+	    if (!hasItem) {
+	        throw new IllegalArgumentException("กรุณาเลือกเมนูอย่างน้อย 1 รายการ");
+	    }
+
+	    ordermenu.setTotalAmount(currentTotal);
+	    return ordermenuRepository.save(ordermenu);
 	}
 	
 	public List<Ordermenu> getActiveOrdersByTable(Integer tableId) {
 	    return ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
 	}
 	
-	public List<OrderItemSummary> getAggregatedActiveOrders(Integer tableId) {
-	    List<Ordermenu> activeOrders = getActiveOrdersByTable(tableId);
-	    Map<Integer, OrderItemSummary> summaryMap = new LinkedHashMap<>();
-	    
-	    for (Ordermenu order : activeOrders) {
-	        for (OrderDetail detail : order.getOrderDetails()) {
-	            Product p = detail.getProduct();
-	            OrderItemSummary summary = summaryMap.computeIfAbsent(p.getProductId(), 
-	                k -> new OrderItemSummary(p, 0, detail.getUnitPrice()));
-	            summary.setQuantity(summary.getQuantity() + detail.getQuantity());
-	        }
-	    }
-	    
-	    return new ArrayList<>(summaryMap.values());
+	public List<Ordermenu> getPaidOrderHistory() {
+        return ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
+    }
+	
+	public BigDecimal calculateGrandTotal(List<Ordermenu> completedOrders) {
+        return completedOrders.stream()
+                .map(Ordermenu::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+	
+	public Map<String, Integer> getGroupedDetails(Ordermenu order) {
+	    return order.getOrderDetails().stream()
+	            .collect(Collectors.groupingBy(
+	                detail -> detail.getProduct().getProductName(),
+	                Collectors.summingInt(OrderDetail::getQuantity)
+	            ));
 	}
 }
