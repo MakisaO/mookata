@@ -3,6 +3,7 @@ package net.start.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +36,7 @@ public class OrdermenuService {
 
 	@Transactional
 	public Ordermenu createOrder(Integer tableId, Map<Integer, Integer> quantities) {
-		Tables table = tablesRepository.findById(tableId).orElseThrow();
-		if (!"unavailable".equalsIgnoreCase(table.getStatus())) {
-			throw new IllegalArgumentException("กรุณาเลือกโต๊ะที่ว่างอยู่");
-		}
+		Tables table = tablesRepository.findById(tableId).orElse(null);
 
 		Ordermenu ordermenu = new Ordermenu();
 		ordermenu.setTables(table);
@@ -75,8 +73,12 @@ public class OrdermenuService {
 		}
 
 		ordermenu.setTotalAmount(totalAmount);
-		table.setStatus("occupied");
+		table.setStatus("unavailable");
 		tablesRepository.save(table);
 		return ordermenuRepository.save(ordermenu);
+	}
+	
+	public List<Ordermenu> getActiveOrdersByTable(Integer tableId) {
+	    return ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
 	}
 }

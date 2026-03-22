@@ -2,114 +2,44 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Mookata SOA Project</title>
+    <title>Restaurant Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            text-align: center;
-            background-color: #f8f9fa;
-            margin: 0;
-            min-height: 100vh;
+        .home-container {
+            height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            gap: 20px;
+        }
+        .btn-custom {
+            width: 250px;
             padding: 20px;
-            box-sizing: border-box;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            transition: transform 0.2s;
         }
-
-        .container {
-            padding: 28px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            background: white;
-            width: min(720px, 100%);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .menu-grid {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            background-color: #ff5722;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            display: inline-block;
-        }
-
-        .btn-menu {
-            background-color: #4CAF50;
-        }
-
-        .btn-order {
-            background-color: #1f7aec;
+        .btn-custom:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>ยินดีต้อนรับสู่ระบบร้านหมูกระทะ</h1>
-        <p>ยินดีต้อนรับคุณ: <span th:text="${userName}" style="font-weight: bold; color: blue;">Guest</span></p>
+<body class="bg-light">
 
-        <hr>
-        <h3>เมนูหลัก</h3>
-        <div class="menu-grid">
-            <a th:href="@{/tables}" class="btn">จัดการโต๊ะ</a>
-            <a th:href="@{/menu}" class="btn btn-menu">ดูเมนูอาหาร</a>
-            <a th:href="@{/orders/new}" class="btn btn-order">สั่งเมนู</a>
-        </div>
-
-        <p>สถานะระบบ: <span th:text="${systemStatus}">Unknown</span></p>
-    </div>
-</body>
-</html>
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-store {
-            background: linear-gradient(135deg, #ff5722, #f44336);
-        }
-
-        .btn-menu {
-            background: linear-gradient(135deg, #4CAF50, #2E7D32);
-        }
+    <div class="container home-container">
+        <h1 class="mb-4">ยินดีต้อนรับสู่ระบบร้าน The Star MooKaTa</h1>
         
-        .btn-promo {
-            background: linear-gradient(135deg, #2196F3, #1565C0);
-            width: 100%;
-            max-width: 420px;
-            margin-top: 10px;
-        }
+        <div class="d-grid gap-3 d-md-block">
+            <a th:href="@{/tables}" class="btn btn-primary btn-custom shadow">
+                <i class="bi bi-shop"></i> จัดการร้านค้า (โต๊ะ)
+            </a>
 
-        .status-text {
-            margin-top: 40px;
-            font-size: 0.9rem;
-            color: #999;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 class="logo">The Star หมูกะทะ</h1>
-        <p class="welcome-text">ยินดีต้อนรับคุณ: <span th:text="${userName != null ? userName : 'ผู้จัดการร้าน'}" style="font-weight: 600; color: #d32f2f;">ผู้จัดการร้าน</span></p>
-
-        <hr>
-        
-        <div class="menu-grid">
-            <a th:href="@{/tables}" class="btn btn-store">จัดการเรื่องโต๊ะ</a>
-            <a th:href="@{/menu}" class="btn btn-menu">จัดการเมนูอาหาร</a>
-            <a th:href="@{/promotions}" class="btn btn-promo">จัดการโปรโมชัน</a>
+            <a th:href="@{/menu}" class="btn btn-success btn-custom shadow">
+                <i class="bi bi-book"></i> ดูเมนูอาหาร
+            </a>
         </div>
-
-        <p class="status-text">สถานะระบบ: <span th:text="${systemStatus != null ? systemStatus : 'ออนไลน์'}">ออนไลน์</span></p>
     </div>
+
 </body>
-</html>
+

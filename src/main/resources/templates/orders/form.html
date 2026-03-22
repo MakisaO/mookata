@@ -1,333 +1,176 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>สั่งเมนู</title>
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            padding: 32px 20px;
-            box-sizing: border-box;
-            background: #f4f6f8;
-            font-family: Tahoma, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>สั่งอาหาร - Mookata</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<style>
+body {
+	background-color: #f8f9fa;
+	font-family: 'Kanit', sans-serif;
+}
 
-        .page {
-            width: min(1100px, 100%);
-            margin: 0 auto;
-        }
+.menu-card {
+	border: none;
+	border-radius: 15px;
+	transition: transform 0.2s;
+	overflow: hidden;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
 
-        .card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
-            padding: 24px;
-        }
+.menu-card:hover {
+	transform: translateY(-5px);
+}
 
-        .field {
-            margin-bottom: 20px;
-        }
+.qty-input {
+	width: 50px;
+	text-align: center;
+	border: none;
+	background: transparent;
+	font-weight: bold;
+}
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
+.btn-qty {
+	width: 35px;
+	height: 35px;
+	border-radius: 50% !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
 
-        select {
-            width: 100%;
-            max-width: 320px;
-            padding: 10px;
-        }
+.order-sidebar {
+	position: sticky;
+	top: 20px;
+}
 
-        .message {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .actions {
-            margin-top: 24px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            border: none;
-            border-radius: 6px;
-            padding: 10px 18px;
-            text-decoration: none;
-            color: white;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        .btn-open {
-            background: #2563eb;
-        }
-
-        .btn-save {
-            background: #16a34a;
-        }
-
-        .btn-back {
-            background: #6b7280;
-        }
-
-        .empty {
-            color: #6b7280;
-            margin-top: 8px;
-        }
-
-        .summary-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            background: #fafafa;
-            margin-top: 24px;
-        }
-
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        .summary-table th,
-        .summary-table td {
-            border-bottom: 1px solid #e5e7eb;
-            padding: 10px 8px;
-            text-align: left;
-        }
-
-        .summary-table th:last-child,
-        .summary-table td:last-child {
-            text-align: right;
-        }
-
-        .total {
-            margin-top: 16px;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: right;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.45);
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal.is-open {
-            display: flex;
-        }
-
-        .modal-content {
-            width: min(900px, 100%);
-            max-height: 85vh;
-            overflow: auto;
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-top: 16px;
-        }
-
-        .menu-card {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            background: #fafafa;
-        }
-
-        .menu-card h3 {
-            margin-top: 0;
-            margin-bottom: 8px;
-        }
-
-        .menu-card p {
-            margin: 6px 0;
-        }
-
-        .menu-card input {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-    </style>
+.table-header {
+	background: linear-gradient(135deg, #ff9800, #f44336);
+	color: white;
+	padding: 20px;
+	border-radius: 15px;
+	margin-bottom: 30px;
+}
+</style>
 </head>
 <body>
-    <div class="page">
-        <div class="card">
-            <h1>สั่งเมนู</h1>
 
-            <div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
-            <div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+	<div class="container py-4">
+		<div
+			class="table-header shadow-sm d-flex justify-content-between align-items-center">
+			<div>
+				<h2 class="mb-0">🎇🎇🎇 The Star MooKaTa 🎇🎇🎇</h2>
+				<p class="mb-0">
+					กำลังสั่งอาหารสำหรับ: <strong>โต๊ะ [[${selectedTableId}]]</strong>
+				</p>
+			</div>
+			<a th:href="@{/tables}" class="btn btn-outline-light btn-sm">เปลี่ยนโต๊ะ</a>
+		</div>
 
-            <form th:action="@{/orders/save}" method="post" id="orderForm">
-                <div class="field">
-                    <label for="tableId">เลือกโต๊ะที่สถานะ unavailable</label>
-                    <select id="tableId" name="tableId" required>
-                        <option value="">เลือกโต๊ะ</option>
-                        <option th:each="table : ${unavailableTables}"
-                                th:value="${table.tableId}"
-                                th:text="${'โต๊ะ ' + table.tableId}"></option>
-                    </select>
-                    <p class="empty" th:if="${#lists.isEmpty(unavailableTables)}">ยังไม่มีโต๊ะที่สถานะ unavailable</p>
-                </div>
+		<form th:action="@{/orders/save}" method="post">
+			<input type="hidden" name="tableId" th:value="${selectedTableId}">
 
-                <div class="field">
-                    <button type="button" class="btn btn-open" id="openMenuBtn">เลือกเมนู</button>
-                </div>
+			<div class="row">
+				<div class="col-lg-8">
+					<h4 class="mb-3">เมนูอาหาร</h4>
+					<div class="row g-3">
+						<div class="col-md-6 col-xl-4" th:each="p : ${products}">
+							<div class="card menu-card h-100">
+								<div class="card-body">
+									<h5 class="card-title" th:text="${p.productName}">ชื่ออาหาร</h5>
+									<p class="text-danger fw-bold mb-3"
+										th:text="${p.productPrice} + ' บาท'">0.00</p>
 
-                <div class="summary-card">
-                    <h2>รายการเมนูที่สั่ง</h2>
-                    <p id="emptySummary" class="empty">ยังไม่ได้เลือกเมนู</p>
+									<div
+										class="d-flex align-items-center justify-content-center bg-light rounded-pill p-1">
+										<button type="button" class="btn btn-white btn-qty shadow-sm"
+											onclick="decreaseQty(this)">-</button>
 
-                    <table class="summary-table" id="summaryTable" style="display: none;">
-                        <thead>
-                            <tr>
-                                <th>เมนู</th>
-                                <th>จำนวน</th>
-                                <th>ราคา/หน่วย</th>
-                                <th>รวม</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summaryBody"></tbody>
-                    </table>
+										<input type="number" th:name="'qty_' + ${p.productId}"
+											value="0" min="0" class="qty-input" readonly>
 
-                    <div class="total" id="totalAmount">รวมทั้งหมด 0 บาท</div>
-                </div>
+										<button type="button" class="btn btn-white btn-qty shadow-sm"
+											onclick="increaseQty(this)">+</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
-                <div class="actions">
-                    <button type="submit" class="btn btn-save">เสร็จสิ้น</button>
-                    <a th:href="@{/}" class="btn btn-back">ย้อนกลับ</a>
-                </div>
+				<div class="col-lg-4">
+					<div class="card order-sidebar shadow-sm border-0 rounded-4">
+						<div class="card-body p-4">
+							<h5 class="text-center">📋 รายการที่สั่งไปแล้ว</h5>
+							<hr>
 
-                <div class="modal" id="menuModal">
-                    <div class="modal-content">
-                        <h2>เลือกเมนู</h2>
-                        <p class="empty" th:if="${#lists.isEmpty(products)}">ยังไม่มีเมนูที่พร้อมขาย</p>
+							<div class="past-orders-list mb-4"
+								style="max-height: 350px; overflow-y: auto;">
+								<div th:each="order : ${pastOrders}"
+									class="card mb-3 border-0 bg-light shadow-sm">
+									<div class="card-body p-2">
+										<div
+											class="d-flex justify-content-between align-items-center mb-1">
+											<small class="fw-bold text-primary">#Order
+												[[${order.orderId}]]</small> <span
+												class="badge rounded-pill bg-warning text-dark"
+												th:text="${order.orderStatus}" style="font-size: 0.7rem;">pending</span>
+										</div>
 
-                        <div class="modal-grid">
-                            <div class="menu-card" th:each="product : ${products}">
-                                <h3 th:text="${product.productName}">ชื่อเมนู</h3>
-                                <p th:text="${product.productDetail}">รายละเอียด</p>
-                                <p th:text="${'ราคา ' + product.productPrice + ' บาท'}">ราคา</p>
-                                <label th:for="${'qty_' + product.productId}">จำนวน</label>
-                                <input type="number"
-                                       min="0"
-                                       value="0"
-                                       th:id="${'qty_' + product.productId}"
-                                       th:name="${'qty_' + product.productId}"
-                                       class="qty-input"
-                                       th:attr="data-name=${product.productName},data-price=${product.productPrice}">
-                            </div>
-                        </div>
+										<div th:each="detail : ${order.orderDetails}"
+											class="d-flex justify-content-between small border-bottom py-1">
+											<span th:text="${detail.product.productName}">หมูสไลด์</span>
+											<span class="fw-bold" th:text="'x' + ${detail.quantity}">x1</span>
+										</div>
 
-                        <div class="modal-actions">
-                            <button type="button" class="btn btn-open" id="applyMenuBtn">เลือกเสร็จแล้ว</button>
-                            <button type="button" class="btn btn-back" id="closeMenuBtn">ปิด</button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+										<div class="text-end mt-1">
+											<small class="text-muted"
+												th:text="${#dates.format(order.orderDate, 'HH:mm')} + ' น.'"></small>
+										</div>
+									</div>
+								</div>
 
-    <script>
-        const menuModal = document.getElementById('menuModal');
-        const openMenuBtn = document.getElementById('openMenuBtn');
-        const closeMenuBtn = document.getElementById('closeMenuBtn');
-        const applyMenuBtn = document.getElementById('applyMenuBtn');
-        const qtyInputs = Array.from(document.querySelectorAll('.qty-input'));
-        const summaryBody = document.getElementById('summaryBody');
-        const summaryTable = document.getElementById('summaryTable');
-        const emptySummary = document.getElementById('emptySummary');
-        const totalAmount = document.getElementById('totalAmount');
+								<div th:if="${#lists.isEmpty(pastOrders)}"
+									class="text-center py-4">
+									<p class="text-muted small">ยังไม่มีรายการอาหารที่สั่ง</p>
+								</div>
+							</div>
 
-        function renderSummary() {
-            let rows = '';
-            let total = 0;
-            let hasItem = false;
+							<div class="text-center">
+								<h5>🛒 สั่งอาหารเพิ่ม</h5>
+								<hr>
+								<p class="text-muted small">
+									เลือกรายการอาหาร<br>แล้วกดปุ่มเพื่อสั่งเพิ่ม
+								</p>
+								<button type="submit"
+									class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow">
+									ส่งรายการอาหาร</button>
+								<a th:href="@{/tables}"
+									class="btn btn-link mt-2 text-decoration-none text-muted d-block text-center">กลับหน้าหลัก</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
 
-            qtyInputs.forEach((input) => {
-                const quantity = Number(input.value || 0);
-                if (quantity <= 0) {
-                    return;
-                }
+	<script>
+    function increaseQty(btn) {
+        const input = btn.previousElementSibling;
+        input.value = parseInt(input.value) + 1;
+    }
 
-                hasItem = true;
-                const unitPrice = Number(input.dataset.price || 0);
-                const itemTotal = unitPrice * quantity;
-                total += itemTotal;
-
-                rows += `
-                    <tr>
-                        <td>${input.dataset.name}</td>
-                        <td>${quantity}</td>
-                        <td>${unitPrice.toFixed(2)} บาท</td>
-                        <td>${itemTotal.toFixed(2)} บาท</td>
-                    </tr>
-                `;
-            });
-
-            summaryBody.innerHTML = rows;
-            summaryTable.style.display = hasItem ? 'table' : 'none';
-            emptySummary.style.display = hasItem ? 'none' : 'block';
-            totalAmount.textContent = `รวมทั้งหมด ${total.toFixed(2)} บาท`;
+    function decreaseQty(btn) {
+        const input = btn.nextElementSibling;
+        if (parseInt(input.value) > 0) {
+            input.value = parseInt(input.value) - 1;
         }
+    }
+</script>
 
-        openMenuBtn.addEventListener('click', () => {
-            menuModal.classList.add('is-open');
-        });
-
-        closeMenuBtn.addEventListener('click', () => {
-            menuModal.classList.remove('is-open');
-        });
-
-        applyMenuBtn.addEventListener('click', () => {
-            renderSummary();
-            menuModal.classList.remove('is-open');
-        });
-
-        menuModal.addEventListener('click', (event) => {
-            if (event.target === menuModal) {
-                menuModal.classList.remove('is-open');
-            }
-        });
-
-        renderSummary();
-    </script>
 </body>
 </html>
