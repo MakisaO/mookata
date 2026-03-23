@@ -21,6 +21,7 @@ body {
 	border-radius: 15px;
 	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 	transition: transform 0.3s ease;
+	height: 100%;
 }
 
 .stat-card:hover {
@@ -41,9 +42,10 @@ body {
 .bg-revenue { background-color: #e8f5e9; color: #2e7d32; }
 .bg-orders { background-color: #e3f2fd; color: #1565c0; }
 .bg-top { background-color: #fff3e0; color: #ef6c00; }
+.bg-least { background-color: #fce4ec; color: #c2185b; }
 
-.table-top-sellers {
-    margin-top: 20px;
+.table-stats {
+    margin-top: 10px;
 }
 </style>
 </head>
@@ -80,9 +82,9 @@ body {
 			</div>
 		</div>
 
-		<div class="row">
+		<div class="row g-4">
 			<!-- Top 5 Best Sellers -->
-			<div class="col-12">
+			<div class="col-lg-6">
 				<div class="card stat-card p-4">
 					<div class="d-flex align-items-center mb-4">
 						<div class="icon-box bg-top mb-0 me-3">
@@ -92,23 +94,67 @@ body {
 					</div>
 					
 					<div class="table-responsive">
-						<table class="table table-hover table-top-sellers">
+						<table class="table table-hover align-middle table-stats">
 							<thead>
 								<tr>
-									<th style="width: 50px;">#</th>
 									<th>ชื่อเมนู</th>
-									<th class="text-center">จำนวนที่ขายได้ (จาน/ชุด)</th>
+									<th class="text-center">จำนวนที่ขาย</th>
+									<th class="text-center">ประวัติ</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="entry, iter : ${topProducts}">
-									<td th:text="${iter.count}">1</td>
-									<td th:text="${entry.key}" class="fw-bold">หมูสามชั้น</td>
+								<tr th:each="entry : ${topProducts}">
+									<td th:text="${entry.key.productName}" class="fw-bold">หมูสามชั้น</td>
 									<td class="text-center">
 										<span class="badge bg-warning text-dark fs-6" th:text="${entry.value}">10</span>
 									</td>
+                                    <td class="text-center">
+                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
+                                            📊 ดูประวัติ
+                                        </a>
+                                    </td>
 								</tr>
 								<tr th:if="${#maps.isEmpty(topProducts)}">
+									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+            <!-- Least 5 Sellers -->
+			<div class="col-lg-6">
+				<div class="card stat-card p-4">
+					<div class="d-flex align-items-center mb-4">
+						<div class="icon-box bg-least mb-0 me-3">
+							<i class="bi bi-graph-down-arrow"></i>
+						</div>
+						<h4 class="fw-bold mb-0">5 อันดับเมนูขายน้อย</h4>
+					</div>
+					
+					<div class="table-responsive">
+						<table class="table table-hover align-middle table-stats">
+							<thead>
+								<tr>
+									<th>ชื่อเมนู</th>
+									<th class="text-center">จำนวนที่ขาย</th>
+									<th class="text-center">ประวัติ</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="entry : ${leastProducts}">
+									<td th:text="${entry.key.productName}" class="fw-bold">ผักชี</td>
+									<td class="text-center">
+										<span class="badge bg-danger fs-6" th:text="${entry.value}">0</span>
+									</td>
+                                    <td class="text-center">
+                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
+                                            📊 ดูประวัติ
+                                        </a>
+                                    </td>
+								</tr>
+								<tr th:if="${#maps.isEmpty(leastProducts)}">
 									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
 								</tr>
 							</tbody>

@@ -45,10 +45,12 @@
                             <span class="fw-bold">เงื่อนไข:</span>
                             <span th:if="${promo.minspend != null}" th:text="'ซื้อขั้นต่ำ ' + ${promo.minspend} + ' ฿'"></span>
                             <span th:if="${promo.reqProduct != null}" th:text="'ซื้อ ' + ${promo.reqProduct.productName} + ' x' + ${promo.reqQuantity}"></span>
+                            <span th:if="${promo.minspend == null && promo.reqProduct == null}">ไม่มีเงื่อนไขพิเศษ</span>
                         </div>
                         <div class="small mb-3 text-success fw-bold">
                             <i class="bi bi-gift"></i> สิทธิพิเศษ: 
-                            <span th:if="${promo.value != null}" th:text="'ลดราคา ' + ${promo.value} + ' ฿'"></span>
+                            <span th:if="${promo.type == 'baht' && promo.value != null}" th:text="'ลดราคา ' + ${promo.value} + ' ฿'"></span>
+                            <span th:if="${promo.type == 'percent'}" th:text="'ลดราคา ' + (${promo.percent != null ? promo.percent : promo.value}) + ' %'"></span>
                             <span th:if="${promo.freeProduct != null}" th:text="'แถมฟรี ' + ${promo.freeProduct.productName} + ' x' + ${promo.quantity}"></span>
                         </div>
                         

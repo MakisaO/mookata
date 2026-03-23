@@ -88,8 +88,7 @@ public class OrderController {
 	    model.addAttribute("selectedTableId", id);
 	    model.addAttribute("products", productService.findAvailable());
 	    
-	    List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(id);
-	    model.addAttribute("pastOrders", activeOrders);
+	    model.addAttribute("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
 	    
 	    return "orders/form";
 	}

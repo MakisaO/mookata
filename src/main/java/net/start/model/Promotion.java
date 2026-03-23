@@ -33,6 +33,9 @@ public class Promotion implements java.io.Serializable {
 	@Column(name = "value")
 	private BigDecimal value;
 
+	@Column(name = "percent")
+	private BigDecimal percent;
+
 	@Column(name = "quantity")
 	private Integer quantity;
 
@@ -97,6 +100,14 @@ public class Promotion implements java.io.Serializable {
 
 	public void setValue(BigDecimal value) {
 		this.value = value;
+	}
+
+	public BigDecimal getPercent() {
+		return this.percent;
+	}
+
+	public void setPercent(BigDecimal percent) {
+		this.percent = percent;
 	}
 
 	public Integer getQuantity() {

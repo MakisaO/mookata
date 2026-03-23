@@ -41,8 +41,12 @@ public class ProductService {
         productRepository.deleteById(id);
     }
     
-    public Page<Product> findPaginated(String keyword, int pageNo, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+    public Page<Product> findPaginated(String keyword, int pageNo, int pageSize, String sortField, String sortDir) {
+        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase(org.springframework.data.domain.Sort.Direction.ASC.name()) ? 
+            org.springframework.data.domain.Sort.by(sortField).ascending() : 
+            org.springframework.data.domain.Sort.by(sortField).descending();
+        
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize, sort);
         if (keyword != null && !keyword.isEmpty()) {
             return productRepository.findByProductNameContainingIgnoreCase(keyword, pageable);
         }

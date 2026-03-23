@@ -114,4 +114,17 @@ public class Product implements java.io.Serializable {
 		this.orderDetails = orderDetails;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Product product = (Product) o;
+		return java.util.Objects.equals(productId, product.productId);
+	}
+
+	@Override
+	public int hashCode() {
+		return java.util.Objects.hash(productId);
+	}
+
 }

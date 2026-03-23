@@ -37,6 +37,26 @@
         .page-link { padding: 8px 14px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; font-size: 14px; }
         .page-item.active .page-link { background-color: #ff5722; color: white; border-color: #ff5722; font-weight: bold; }
         .page-item.disabled .page-link { color: #ccc; pointer-events: none; background-color: #f9f9f9;}
+        
+        .sort-link { color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .sort-link:hover { text-decoration: underline; }
+
+        .sort-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 5px;
+            transition: background-color 0.2s;
+        }
+        .sort-btn:hover { background-color: rgba(255, 255, 255, 0.4); }
+        .sort-btn.active { background-color: white; color: #ff5722; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -48,20 +68,50 @@
             
             <form th:action="@{/menu}" method="get" class="search-box" id="searchForm">
                 <input type="text" name="keyword" class="search-input" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}">
+                <input type="hidden" name="sortField" th:value="${sortField}">
+                <input type="hidden" name="sortDir" th:value="${sortDir}">
             </form>
         </div>
         
         <table th:if="${totalItems > 0}">
             <thead>
                 <tr>
-                    <th>ชื่อเมนู</th>
-                    <th>รายละเอียด</th> <th>ราคา (บาท)</th>
-                    <th>สถานะ</th>
+                    <th>
+                        หมวดหมู่
+                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='categories.categoriesName', sortDir=${sortField == 'categories.categoriesName' ? reverseSortDir : 'asc'})}" 
+                           class="sort-btn" th:classappend="${sortField == 'categories.categoriesName'} ? 'active'">
+                            <span th:text="${sortField == 'categories.categoriesName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
+                        </a>
+                    </th>
+                    <th>
+                        ชื่อเมนู
+                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productName', sortDir=${sortField == 'productName' ? reverseSortDir : 'asc'})}" 
+                           class="sort-btn" th:classappend="${sortField == 'productName'} ? 'active'">
+                            <span th:text="${sortField == 'productName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
+                        </a>
+                    </th>
+                    <th>รายละเอียด</th> 
+                    <th>
+                        ราคา
+                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productPrice', sortDir=${sortField == 'productPrice' ? reverseSortDir : 'asc'})}" 
+                           class="sort-btn" th:classappend="${sortField == 'productPrice'} ? 'active'">
+                            <span th:text="${sortField == 'productPrice' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
+                        </a>
+                    </th>
+                    <th>
+                        สถานะ
+                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productStatus', sortDir=${sortField == 'productStatus' ? reverseSortDir : 'asc'})}" 
+                           class="sort-btn" th:classappend="${sortField == 'productStatus'} ? 'active'">
+                            <span th:text="${sortField == 'productStatus' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
+                        </a>
+                    </th>
                     <th>จัดการ</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="p : ${products}">
+                    <td th:text="${p.categories != null ? p.categories.categoriesName : '-'}" style="font-size: 14px; color: #555;">หมวดหมู่</td>
+
                     <td th:text="${p.productName}" style="text-align: left; font-weight: bold;">ชุดหมูรวมมิตร</td>
                     
                     <td th:text="${p.productDetail}" class="detail-col">รายละเอียดสินค้าจะแสดงที่นี่</td>
@@ -88,16 +138,16 @@
         <div th:if="${totalPages > 1}">
             <ul class="pagination">
                 <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword})}">« ก่อนหน้า</a>
+                    <a class="page-link" th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">« ก่อนหน้า</a>
                 </li>
                 
                 <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
                     th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/menu(page=${i}, keyword=${keyword})}" th:text="${i}">1</a>
+                    <a class="page-link" th:href="@{/menu(page=${i}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}" th:text="${i}">1</a>
                 </li>
                 
                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword})}">ถัดไป »</a>
+                    <a class="page-link" th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">ถัดไป »</a>
                 </li>
             </ul>
         </div>

@@ -150,15 +150,15 @@ public class OrdermenuService {
                 ));
     }
 
-    public Map<String, Integer> getTopSellingProducts() {
+    public Map<Product, Integer> getTopSellingProducts() {
         List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
         return allPaid.stream()
                 .flatMap(order -> order.getOrderDetails().stream())
                 .collect(Collectors.groupingBy(
-                    detail -> detail.getProduct().getProductName(),
+                    OrderDetail::getProduct,
                     Collectors.summingInt(OrderDetail::getQuantity)
                 )).entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .sorted(Map.Entry.<Product, Integer>comparingByValue().reversed())
                 .limit(5)
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
@@ -166,5 +166,41 @@ public class OrdermenuService {
                     (e1, e2) -> e1,
                     LinkedHashMap::new
                 ));
+    }
+
+    public Map<Product, Integer> getLeastSellingProducts() {
+        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
+        
+        // 1. Get counts of everything that has been sold
+        Map<Product, Integer> soldProducts = allPaid.stream()
+                .flatMap(order -> order.getOrderDetails().stream())
+                .collect(Collectors.groupingBy(
+                    OrderDetail::getProduct,
+                    Collectors.summingInt(OrderDetail::getQuantity)
+                ));
+
+        // 2. Get all available products to find ones with 0 sales
+        List<Product> allProducts = productRepository.findAll();
+        for (Product p : allProducts) {
+            soldProducts.putIfAbsent(p, 0);
+        }
+
+        return soldProducts.entrySet().stream()
+                .sorted(Map.Entry.<Product, Integer>comparingByValue())
+                .limit(5)
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (e1, e2) -> e1,
+                    LinkedHashMap::new
+                ));
+    }
+
+    public List<OrderDetail> getProductSalesHistory(Integer productId) {
+        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
+        return allPaid.stream()
+                .flatMap(order -> order.getOrderDetails().stream())
+                .filter(detail -> detail.getProduct().getProductId().equals(productId))
+                .collect(Collectors.toList());
     }
 }

@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import net.start.model.Product;
+import net.start.model.Categories;
 import net.start.service.ProductService;
+import net.start.service.CategoriesService;
 
 @Controller
 @RequestMapping("/menu") // กำหนด Path หลักให้เป็น /menu
@@ -21,21 +23,29 @@ public class MenuController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private CategoriesService categoriesService;
+
     // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้าและค้นหา
     @GetMapping("")
     public String listMenu(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "sortField", defaultValue = "productId") String sortField,
+            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
             Model model) {
         
         int pageSize = 10;
-        Page<Product> productPage = productService.findPaginated(keyword, page, pageSize);
+        Page<Product> productPage = productService.findPaginated(keyword, page, pageSize, sortField, sortDir);
         
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", productPage.getTotalPages());
         model.addAttribute("totalItems", productPage.getTotalElements());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
 
         return "menu/list";
     }
@@ -43,7 +53,10 @@ public class MenuController {
     // 2. Create: แสดงหน้าฟอร์มเพิ่มเมนูใหม่
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        model.addAttribute("product", new Product());
+        Product product = new Product();
+        product.setCategories(new Categories()); // Initialize to avoid null pointer in view
+        model.addAttribute("product", product);
+        model.addAttribute("categories", categoriesService.findAll());
         // ต้องมีไฟล์ที่: src/main/resources/templates/menu/form.html
         return "menu/form";
     }
@@ -51,6 +64,8 @@ public class MenuController {
     // 3. Create/Save: รับข้อมูลจากฟอร์มและบันทึกลงฐานข้อมูล
     @PostMapping("/save")
     public String saveMenu(@ModelAttribute("product") Product product) {
+        // If categories was bound only by ID, ensure it's not a detached/empty object if needed
+        // But usually JPA handles it if it has an ID
         productService.save(product);
         return "redirect:/menu"; // บันทึกเสร็จให้วิ่งกลับไปหน้า list
     }
@@ -59,7 +74,11 @@ public class MenuController {
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") int id, Model model) {
         Product existingProduct = productService.findById(id);
+        if (existingProduct.getCategories() == null) {
+            existingProduct.setCategories(new Categories());
+        }
         model.addAttribute("product", existingProduct);
+        model.addAttribute("categories", categoriesService.findAll());
         return "menu/form"; // ใช้ไฟล์ form.html ร่วมกัน
     }
 
@@ -73,6 +92,7 @@ public class MenuController {
         existingProduct.setProductPrice(productDetails.getProductPrice());
         existingProduct.setProductStatus(productDetails.getProductStatus());
         existingProduct.setProductDetail(productDetails.getProductDetail());
+        existingProduct.setCategories(productDetails.getCategories());
 
         productService.save(existingProduct);
         return "redirect:/menu";

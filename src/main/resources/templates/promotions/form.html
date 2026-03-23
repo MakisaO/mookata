@@ -16,6 +16,11 @@
         <h2 class="fw-bold mb-4" th:text="${promotion.promotionId == null ? '➕ เพิ่มโปรโมชั่นใหม่' : '⚙️ แก้ไขโปรโมชั่น'}"></h2>
         <hr>
 
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <form th:action="${promotion.promotionId == null ? '/promotion/save' : '/promotion/update/' + promotion.promotionId}" 
               th:object="${promotion}" method="post">
             
@@ -55,7 +60,11 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">มูลค่าส่วนลด (บาท)</label>
-                    <input type="number" step="0.01" min="0" th:field="*{value}" class="form-control" placeholder="ถ้าไม่มีให้ว่างไว้">
+                    <input type="number" step="0.01" min="0" th:field="*{value}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลดบาท">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">มูลค่าส่วนลด (%)</label>
+                    <input type="number" step="0.01" min="0" th:field="*{percent}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลด %">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">จำนวนสินค้าที่แถม</label>

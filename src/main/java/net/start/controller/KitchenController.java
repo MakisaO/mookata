@@ -96,7 +96,6 @@ public class KitchenController {
         }
 
         boolean hasOrdered = items.stream().anyMatch(i -> "ordered".equals(i.getItemStatus()));
-        boolean hasCooking = items.stream().anyMatch(i -> "cooking".equals(i.getItemStatus()));
 
         String targetStatus;
         String message;

@@ -168,6 +168,7 @@ CREATE TABLE `promotion` (
   `detail` varchar(255) DEFAULT NULL,
   `type` enum('percent','baht','add') NOT NULL,
   `value` decimal(10,2) DEFAULT NULL,
+  `percent` decimal(10,2) DEFAULT NULL,
   `quantity` int(11) DEFAULT NULL,
   `free_product_id` int(11) DEFAULT NULL,
   `minspend` decimal(10,2) DEFAULT NULL,
@@ -181,10 +182,10 @@ CREATE TABLE `promotion` (
 -- Dumping data for table `promotion`
 --
 
-INSERT INTO `promotion` (`promotion_id`, `name`, `detail`, `type`, `value`, `quantity`, `free_product_id`, `minspend`, `req_product_id`, `req_quantity`, `start_date`, `end_date`) VALUES
-(16, 'สั่งครบ 500 แถมน้ำ', 'ทานครบ 500 บาท ฟรี น้ำเปล่าขวดเล็ก 1 ขวด', 'add', NULL, 1, 28, 500.00, NULL, NULL, '2024-01-01 00:00:00', '2024-12-31 00:00:00'),
-(17, 'Happy Monday', 'ส่วนลด 10% สำหรับยอดรวมเมื่อทานอาหารในวันจันทร์', 'percent', 10.00, NULL, NULL, NULL, NULL, NULL, '2024-01-01 00:00:00', '2024-12-31 00:00:00'),
-(18, 'ลดชุดกินเอาตาย 100บ.', 'ส่วนลด 100 บาท เมื่อสั่งชุดกินเอาตาย', 'baht', 100.00, NULL, NULL, NULL, 3, 1, '2024-01-01 00:00:00', '2024-12-31 00:00:00');
+INSERT INTO `promotion` (`promotion_id`, `name`, `detail`, `type`, `value`, `percent`, `quantity`, `free_product_id`, `minspend`, `req_product_id`, `req_quantity`, `start_date`, `end_date`) VALUES
+(16, 'สั่งครบ 500 แถมน้ำ', 'ทานครบ 500 บาท ฟรี น้ำเปล่าขวดเล็ก 1 ขวด', 'add', NULL, NULL, 1, 28, 500.00, NULL, NULL, '2024-01-01 00:00:00', '2024-12-31 00:00:00'),
+(17, 'Happy Monday', 'ส่วนลด 10% สำหรับยอดรวมเมื่อทานอาหารในวันจันทร์', 'percent', NULL, 10.00, NULL, NULL, NULL, NULL, NULL, '2024-01-01 00:00:00', '2024-12-31 00:00:00'),
+(18, 'ลดชุดกินเอาตาย 100บ.', 'ส่วนลด 100 บาท เมื่อสั่งชุดกินเอาตาย', 'baht', 100.00, NULL, NULL, NULL, NULL, 32, 1, '2024-01-01 00:00:00', '2024-12-31 00:00:00');
 
 -- --------------------------------------------------------
 
