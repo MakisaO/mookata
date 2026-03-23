@@ -52,4 +52,17 @@ public class PaymentService {
         table.setStatus("available");
         tablesRepository.save(table);
     }
+
+    @Transactional
+    public void resetTableStatus(Integer tableId) {
+        Tables table = tablesRepository.findById(tableId).orElseThrow(() -> new IllegalArgumentException("Invalid Table ID"));
+        List<Ordermenu> activeOrders = ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
+        
+        if (!activeOrders.isEmpty()) {
+            throw new IllegalArgumentException("Cannot reset table with active orders. Please proceed to checkout.");
+        }
+
+        table.setStatus("available");
+        tablesRepository.save(table);
+    }
 }

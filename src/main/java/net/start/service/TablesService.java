@@ -28,9 +28,14 @@ public class TablesService {
 		return tablesRepository.findById(id).orElseThrow();
 	}
 
-	// Create / Update: บันทึกข้อมูลโต๊ะ (ไม่มีฟังก์ชัน Delete ตามรีเควส)
+	// Create / Update: บันทึกข้อมูลโต๊ะ
 	public Tables save(Tables tables) {
 		return tablesRepository.save(tables);
+	}
+
+	// Delete: ลบโต๊ะ
+	public void deleteById(int id) {
+		tablesRepository.deleteById(id);
 	}
 
 }

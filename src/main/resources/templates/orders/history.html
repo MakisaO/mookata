@@ -22,6 +22,19 @@ body {
 .table thead {
 	background-color: #f8f9fa;
 }
+
+.pagination {
+	margin-bottom: 0;
+}
+
+.page-link {
+	color: #0d6efd;
+}
+
+.page-item.active .page-link {
+	background-color: #0d6efd;
+	border-color: #0d6efd;
+}
 </style>
 </head>
 <body>
@@ -29,32 +42,49 @@ body {
 	<div class="container">
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<h2>🧾 ประวัติการชำระเงิน</h2>
-			<a th:href="@{/tables}" class="btn btn-secondary">กลับหน้าหลัก</a>
+			<a th:href="@{/}" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
 		</div>
 
 		<div class="card mb-4 bg-primary text-white p-3">
 			<div class="row text-center">
 				<div class="col">
 					<h5>จำนวนออเดอร์ทั้งหมด</h5>
-					<h3 th:text="${#lists.size(orders)}">0</h3>
+					<h3 th:text="${totalItems}">0</h3>
 				</div>
 				<div class="col border-start">
-					<h5>ยอดขายรวม (ในหน้านี้)</h5>
+					<h5>รายได้รวมทั้งหมด</h5>
 					<h3>
-						<span th:text="${grandTotal}">0.00</span> ฿
+						<span th:text="${#numbers.formatDecimal(grandTotal, 1, 2)}">0.00</span> ฿
 					</h3>
 				</div>
 			</div>
 		</div>
 
 		<div class="card p-3">
-			<table class="table table-hover">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<div>
+					แสดงหน้า <span th:text="${currentPage + 1}">1</span> จาก <span th:text="${totalPages}">1</span>
+				</div>
+				<div class="d-flex align-items-center">
+					<label class="me-2">แสดง:</label>
+					<select class="form-select form-select-sm" style="width: auto;" 
+							onchange="location.href='/orders/history?page=0&size=' + this.value">
+						<option th:value="10" th:selected="${pageSize == 10}">10</option>
+						<option th:value="20" th:selected="${pageSize == 20}">20</option>
+						<option th:value="50" th:selected="${pageSize == 50}">50</option>
+						<option th:value="100" th:selected="${pageSize == 100}">100</option>
+					</select>
+				</div>
+			</div>
+
+			<table class="table table-hover align-middle">
 				<thead>
 					<tr>
 						<th>วันที่/เวลา</th>
 						<th>โต๊ะ</th>
 						<th>รายการอาหาร</th>
 						<th class="text-end">ยอดสุทธิ</th>
+						<th class="text-center">การจัดการ</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -66,15 +96,26 @@ body {
 
 						<td>
 							<ul class="list-unstyled mb-0 small">
-								<li th:each="entry : ${summaryMap[order.orderId]}">• <span
-									th:text="${entry.key}">ชื่อเมนู</span> <span class="fw-bold"
-									th:text="'x' + ${entry.value}">x2</span>
+								<th:block th:each="entry, iter : ${summaryMap[order.orderId]}">
+									<li th:if="${iter.index < 5}">• <span
+										th:text="${entry.key}">ชื่อเมนู</span> <span class="fw-bold"
+										th:text="'x' + ${entry.value}">x2</span>
+									</li>
+								</th:block>
+								<li th:if="${#maps.size(summaryMap[order.orderId]) > 5}" class="text-muted italic">
+									... และอีก <span th:text="${#maps.size(summaryMap[order.orderId]) - 5}"></span> รายการ
 								</li>
 							</ul>
 						</td>
 
 						<td class="text-end fw-bold text-success"
-							th:text="${order.totalAmount} + ' ฿'"></td>
+							th:text="${#numbers.formatDecimal(order.totalAmount, 1, 2)} + ' ฿'"></td>
+						
+						<td class="text-center">
+							<a th:href="@{/orders/history/{id}(id=${order.orderId})}" class="btn btn-sm btn-outline-primary">
+								🔍 ดูรายละเอียด
+							</a>
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -82,6 +123,28 @@ body {
 			<div th:if="${#lists.isEmpty(orders)}"
 				class="text-center py-5 text-muted">
 				ยังไม่มีประวัติการชำระเงินในขณะนี้</div>
+
+			<!-- Pagination Controls -->
+			<nav th:if="${totalPages > 1}" aria-label="Page navigation" class="mt-4">
+				<ul class="pagination justify-content-center">
+					<li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+						<a class="page-link" th:href="@{/orders/history(page=${currentPage - 1}, size=${pageSize})}" aria-label="Previous">
+							<span aria-hidden="true">&laquo; ก่อนหน้า</span>
+						</a>
+					</li>
+					
+					<li class="page-item" th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+						th:classappend="${pageNumber == currentPage} ? 'active'">
+						<a class="page-link" th:href="@{/orders/history(page=${pageNumber}, size=${pageSize})}" th:text="${pageNumber + 1}">1</a>
+					</li>
+
+					<li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+						<a class="page-link" th:href="@{/orders/history(page=${currentPage + 1}, size=${pageSize})}" aria-label="Next">
+							<span aria-hidden="true">ถัดไป &raquo;</span>
+						</a>
+					</li>
+				</ul>
+			</nav>
 		</div>
 	</div>
 

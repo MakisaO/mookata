@@ -35,10 +35,11 @@ public class PaymentController {
     private PaymentService paymentService;
 
     @GetMapping("/checkout/table/{tableId}")
-    public String showTableCheckout(@PathVariable("tableId") Integer tableId, Model model) {
+    public String showTableCheckout(@PathVariable("tableId") Integer tableId, Model model, RedirectAttributes redirectAttributes) {
         List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(tableId);
         
         if (activeOrders.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "โต๊ะนี้ยังไม่มีรายการอาหาร");
             return "redirect:/tables";
         }
         
@@ -93,6 +94,17 @@ public class PaymentController {
             return "redirect:/payments/checkout/table/" + tableId;
         }
 
+        return "redirect:/tables";
+    }
+
+    @PostMapping("/reset/{tableId}")
+    public String resetTable(@PathVariable("tableId") Integer tableId, RedirectAttributes redirectAttributes) {
+        try {
+            paymentService.resetTableStatus(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "คืนโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "เกิดข้อผิดพลาด: " + e.getMessage());
+        }
         return "redirect:/tables";
     }
 }

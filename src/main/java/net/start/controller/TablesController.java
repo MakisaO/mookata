@@ -57,6 +57,13 @@ public class TablesController {
 		return "redirect:/tables";
 	}
 
+	// Delete: ลบโต๊ะ
+	@GetMapping("/delete/{id}")
+	public String deleteTable(@PathVariable("id") int id) {
+		tablesService.deleteById(id);
+		return "redirect:/tables";
+	}
+
 
 
 	// Read: แสดงรายละเอียดโต๊ะ (ดูรายการอาหารที่สั่ง)

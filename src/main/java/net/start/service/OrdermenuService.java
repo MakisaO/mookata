@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,20 +47,26 @@ public class OrdermenuService {
 
 	    Ordermenu ordermenu;
 
-	    if ("available".equalsIgnoreCase(table.getStatus())) {
+	    // Check for an existing active order first
+	    ordermenu = ordermenuRepository.findFirstByTables_TableIdAndOrderStatusNotOrderByOrderDateDesc(tableId, "paid")
+	            .orElse(null);
+
+	    if (ordermenu == null) {
+	        // If no active order exists, we must create one regardless of the current table status
+	        // (This handles manually set 'unavailable' or 'reserved' statuses)
 	        ordermenu = new Ordermenu();
 	        ordermenu.setTables(table);
 	        ordermenu.setOrderDate(Timestamp.from(Instant.now()));
 	        ordermenu.setOrderStatus("pending");
 	        ordermenu.setTotalAmount(BigDecimal.ZERO);
 	        
-	        table.setStatus("unavailable");
-	        tablesRepository.save(table);
+	        // Ensure table status is set to 'unavailable' if it wasn't already
+	        if (!"unavailable".equalsIgnoreCase(table.getStatus())) {
+	            table.setStatus("unavailable");
+	            tablesRepository.save(table);
+	        }
 	        
 	        ordermenu = ordermenuRepository.save(ordermenu);
-	    } else {
-	        ordermenu = ordermenuRepository.findFirstByTables_TableIdAndOrderStatusNotOrderByOrderDateDesc(tableId, "paid")
-	                .orElseThrow(() -> new IllegalArgumentException("ไม่พบออเดอร์เดิมที่ค้างอยู่ของโต๊ะนี้"));
 	    }
 
 	    BigDecimal currentTotal = ordermenu.getTotalAmount();
@@ -112,9 +120,24 @@ public class OrdermenuService {
     public List<Ordermenu> getPaidOrderHistory() {
         return ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
     }
+
+    public Ordermenu findById(Integer id) {
+        return ordermenuRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("ไม่พบออเดอร์ที่ระบุ: " + id));
+    }
+
+    public Page<Ordermenu> getPaidOrderHistoryPaginated(Pageable pageable) {
+        return ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid", pageable);
+    }
     
     public BigDecimal calculateGrandTotal(List<Ordermenu> completedOrders) {
         return completedOrders.stream()
+                .map(Ordermenu::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal calculateTotalRevenue() {
+        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
+        return allPaid.stream()
                 .map(Ordermenu::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -124,6 +147,24 @@ public class OrdermenuService {
                 .collect(Collectors.groupingBy(
                     detail -> detail.getProduct().getProductName(),
                     Collectors.summingInt(OrderDetail::getQuantity)
+                ));
+    }
+
+    public Map<String, Integer> getTopSellingProducts() {
+        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
+        return allPaid.stream()
+                .flatMap(order -> order.getOrderDetails().stream())
+                .collect(Collectors.groupingBy(
+                    detail -> detail.getProduct().getProductName(),
+                    Collectors.summingInt(OrderDetail::getQuantity)
+                )).entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (e1, e2) -> e1,
+                    LinkedHashMap::new
                 ));
     }
 }
