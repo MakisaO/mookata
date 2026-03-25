@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>สรุปยอดขาย - Mookata</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link
+	rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+body {
+	background-color: #f4f7f6;
+	font-family: 'Kanit', sans-serif;
+	padding: 30px;
+}
+
+.stat-card {
+	border: none;
+	border-radius: 15px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+	transition: transform 0.3s ease;
+	height: 100%;
+}
+
+.stat-card:hover {
+	transform: translateY(-5px);
+}
+
+.icon-box {
+	width: 60px;
+	height: 60px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28px;
+	margin-bottom: 20px;
+}
+
+.bg-revenue { background-color: #e8f5e9; color: #2e7d32; }
+.bg-orders { background-color: #e3f2fd; color: #1565c0; }
+.bg-top { background-color: #fff3e0; color: #ef6c00; }
+.bg-least { background-color: #fce4ec; color: #c2185b; }
+
+.table-stats {
+    margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+	<div class="container">
+		<div class="d-flex justify-content-between align-items-center mb-5">
+			<h2 class="fw-bold"><i class="bi bi-bar-chart-line"></i> สรุปยอดขาย (Sales Summary)</h2>
+			<a th:href="@{/}" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
+		</div>
+
+		<div class="row g-4 mb-5">
+			<!-- Total Revenue -->
+			<div class="col-md-6">
+				<div class="card stat-card p-4">
+					<div class="icon-box bg-revenue">
+						<i class="bi bi-currency-dollar"></i>
+					</div>
+					<h6 class="text-muted mb-1">รายได้รวมทั้งหมด</h6>
+					<h2 class="fw-bold mb-0 text-success" 
+                        th:text="${#numbers.formatDecimal(totalRevenue, 1, 2)} + ' ฿'">0.00 ฿</h2>
+				</div>
+			</div>
+
+			<!-- Total Orders -->
+			<div class="col-md-6">
+				<div class="card stat-card p-4">
+					<div class="icon-box bg-orders">
+						<i class="bi bi-receipt"></i>
+					</div>
+					<h6 class="text-muted mb-1">จำนวนออเดอร์ที่ชำระแล้ว</h6>
+					<h2 class="fw-bold mb-0 text-primary" th:text="${totalOrders}">0</h2>
+				</div>
+			</div>
+		</div>
+
+		<div class="row g-4">
+			<!-- Top 5 Best Sellers -->
+			<div class="col-lg-6">
+				<div class="card stat-card p-4">
+					<div class="d-flex align-items-center mb-4">
+						<div class="icon-box bg-top mb-0 me-3">
+							<i class="bi bi-star-fill"></i>
+						</div>
+						<h4 class="fw-bold mb-0">5 อันดับเมนูขายดี</h4>
+					</div>
+					
+					<div class="table-responsive">
+						<table class="table table-hover align-middle table-stats">
+							<thead>
+								<tr>
+									<th>ชื่อเมนู</th>
+									<th class="text-center">จำนวนที่ขาย</th>
+									<th class="text-center">ประวัติ</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="entry : ${topProducts}">
+									<td th:text="${entry.key.productName}" class="fw-bold">หมูสามชั้น</td>
+									<td class="text-center">
+										<span class="badge bg-warning text-dark fs-6" th:text="${entry.value}">10</span>
+									</td>
+                                    <td class="text-center">
+                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
+                                            📊 ดูประวัติ
+                                        </a>
+                                    </td>
+								</tr>
+								<tr th:if="${#maps.isEmpty(topProducts)}">
+									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+            <!-- Least 5 Sellers -->
+			<div class="col-lg-6">
+				<div class="card stat-card p-4">
+					<div class="d-flex align-items-center mb-4">
+						<div class="icon-box bg-least mb-0 me-3">
+							<i class="bi bi-graph-down-arrow"></i>
+						</div>
+						<h4 class="fw-bold mb-0">5 อันดับเมนูขายน้อย</h4>
+					</div>
+					
+					<div class="table-responsive">
+						<table class="table table-hover align-middle table-stats">
+							<thead>
+								<tr>
+									<th>ชื่อเมนู</th>
+									<th class="text-center">จำนวนที่ขาย</th>
+									<th class="text-center">ประวัติ</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="entry : ${leastProducts}">
+									<td th:text="${entry.key.productName}" class="fw-bold">ผักชี</td>
+									<td class="text-center">
+										<span class="badge bg-danger fs-6" th:text="${entry.value}">0</span>
+									</td>
+                                    <td class="text-center">
+                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
+                                            📊 ดูประวัติ
+                                        </a>
+                                    </td>
+								</tr>
+								<tr th:if="${#maps.isEmpty(leastProducts)}">
+									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

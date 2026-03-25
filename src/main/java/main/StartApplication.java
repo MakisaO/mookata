@@ -7,7 +7,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@ComponentScan("net.start.*")
+@ComponentScan("net.start")
 @EnableJpaRepositories(basePackages ="net.start.repository")
 @EntityScan("net.start.model")
 

@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,19 +49,38 @@ public class OrderController {
 	}
 	
 	@GetMapping("/history")
-	public String showOrderHistory(Model model) {
-	    List<Ordermenu> history = ordermenuService.getPaidOrderHistory();
-	    BigDecimal grandTotal = ordermenuService.calculateGrandTotal(history);
+	public String showOrderHistory(
+	        @RequestParam(value = "page", defaultValue = "0") int page,
+	        @RequestParam(value = "size", defaultValue = "10") int size,
+	        Model model) {
+	    
+	    Page<Ordermenu> orderPage = ordermenuService.getPaidOrderHistoryPaginated(PageRequest.of(page, size));
+	    BigDecimal grandTotal = ordermenuService.calculateTotalRevenue();
 
 	    // สร้าง Map สำหรับเก็บข้อมูลที่ Group แล้วของทุก Order ในหน้านี้
-	    Map<Integer, Map<String, Integer>> summaryMap = history.stream().collect(Collectors.toMap(Ordermenu::getOrderId, order -> ordermenuService.getGroupedDetails(order)
+	    Map<Integer, Map<String, Integer>> summaryMap = orderPage.getContent().stream()
+	        .collect(Collectors.toMap(
+	            Ordermenu::getOrderId, 
+	            order -> ordermenuService.getGroupedDetails(order)
 	        ));
 
-	    model.addAttribute("orders", history);
+	    model.addAttribute("orders", orderPage.getContent());
+	    model.addAttribute("currentPage", page);
+	    model.addAttribute("totalPages", orderPage.getTotalPages());
+	    model.addAttribute("totalItems", orderPage.getTotalElements());
+	    model.addAttribute("pageSize", size);
 	    model.addAttribute("grandTotal", grandTotal);
 	    model.addAttribute("summaryMap", summaryMap);
 
 	    return "orders/history";
+	}
+
+	@GetMapping("/history/{id}")
+	public String showOrderDetail(@PathVariable("id") Integer id, Model model) {
+	    Ordermenu order = ordermenuService.findById(id);
+	    model.addAttribute("order", order);
+	    model.addAttribute("groupedDetails", ordermenuService.getGroupedDetails(order));
+	    return "orders/detail";
 	}
 	
 	@GetMapping("/{id}")
@@ -67,8 +88,7 @@ public class OrderController {
 	    model.addAttribute("selectedTableId", id);
 	    model.addAttribute("products", productService.findAvailable());
 	    
-	    List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(id);
-	    model.addAttribute("pastOrders", activeOrders);
+	    model.addAttribute("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
 	    
 	    return "orders/form";
 	}

@@ -35,10 +35,11 @@ public class PaymentController {
     private PaymentService paymentService;
 
     @GetMapping("/checkout/table/{tableId}")
-    public String showTableCheckout(@PathVariable("tableId") Integer tableId, Model model) {
+    public String showTableCheckout(@PathVariable("tableId") Integer tableId, Model model, RedirectAttributes redirectAttributes) {
         List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(tableId);
         
         if (activeOrders.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "โต๊ะนี้ยังไม่มีรายการอาหาร");
             return "redirect:/tables";
         }
         
@@ -54,12 +55,18 @@ public class PaymentController {
 
         List<Promotion> promos = promotionService.findAll();
         for (Promotion p : promos) {
+            // Basic validation: must be within date range (optional, but good practice)
+            
             if (p.getMinspend() != null && originalTotal.compareTo(p.getMinspend()) >= 0) {
-                if ("discount".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
+                if ("percent".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
+                    BigDecimal percentDiscount = originalTotal.multiply(p.getValue()).divide(new BigDecimal(100));
+                    discount = discount.add(percentDiscount);
+                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + "% (-" + percentDiscount + " ฿) [" + p.getName() + "]");
+                } else if ("baht".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
                     discount = discount.add(p.getValue());
-                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + " บาท (" + p.getName() + ")");
-                } else if ("free_item".equalsIgnoreCase(p.getType()) && p.getFreeProduct() != null) {
-                    messages.add("🎁 แถมฟรี: " + p.getFreeProduct().getProductName() + " (" + p.getName() + ")");
+                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + " บาท [" + p.getName() + "]");
+                } else if ("add".equalsIgnoreCase(p.getType()) && p.getFreeProduct() != null) {
+                    messages.add("🎁 แถมฟรี: " + p.getFreeProduct().getProductName() + " x" + p.getQuantity() + " [" + p.getName() + "]");
                 }
             }
         }
@@ -93,6 +100,17 @@ public class PaymentController {
             return "redirect:/payments/checkout/table/" + tableId;
         }
 
+        return "redirect:/tables";
+    }
+
+    @PostMapping("/reset/{tableId}")
+    public String resetTable(@PathVariable("tableId") Integer tableId, RedirectAttributes redirectAttributes) {
+        try {
+            paymentService.resetTableStatus(tableId);
+            redirectAttributes.addFlashAttribute("successMessage", "คืนโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "เกิดข้อผิดพลาด: " + e.getMessage());
+        }
         return "redirect:/tables";
     }
 }

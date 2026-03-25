@@ -32,6 +32,11 @@
             
             <input type="hidden" th:field="*{productId}" />
             
+            <label>หมวดหมู่สินค้า:</label>
+            <select th:field="*{categories.categoriesId}">
+                <option th:each="cat : ${categories}" th:value="${cat.categoriesId}" th:text="${cat.categoriesName}">หมวดหมู่</option>
+            </select>
+
             <label>ชื่อเมนูอาหาร:</label>
             <input type="text" th:field="*{productName}" placeholder="เช่น สามชั้นสไลด์" required />
             

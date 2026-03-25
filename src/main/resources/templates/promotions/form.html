@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>ฟอร์มโปรโมชั่น - Mookata</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+    body { background-color: #f4f7f6; font-family: 'Kanit', sans-serif; padding: 30px; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .section-title { border-left: 5px solid #0d6efd; padding-left: 10px; margin-bottom: 20px; color: #333; }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="fw-bold mb-4" th:text="${promotion.promotionId == null ? '➕ เพิ่มโปรโมชั่นใหม่' : '⚙️ แก้ไขโปรโมชั่น'}"></h2>
+        <hr>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <form th:action="${promotion.promotionId == null ? '/promotion/save' : '/promotion/update/' + promotion.promotionId}" 
+              th:object="${promotion}" method="post">
+            
+            <!-- Hidden ID field for updates -->
+            <input type="hidden" th:field="*{promotionId}">
+
+            <div class="row mb-4">
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">ชื่อโปรโมชั่น</label>
+                    <input type="text" th:field="*{name}" class="form-control" required placeholder="เช่น ลด 100 บาท เมื่อซื้อครบ 500">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">รายละเอียด</label>
+                    <textarea th:field="*{detail}" class="form-control" rows="2" placeholder="รายละเอียดเพิ่มเติมของโปรโมชั่นนี้..."></textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">ประเภท</label>
+                    <select th:field="*{type}" class="form-select" required>
+                        <option value="percent">ส่วนลด % (percent)</option>
+                        <option value="baht">ส่วนลดบาท (baht)</option>
+                        <option value="add">แถมสินค้า (add)</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-bold">วันที่เริ่ม</label>
+                    <input type="datetime-local" th:field="*{startDate}" class="form-control" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-bold">วันที่สิ้นสุด</label>
+                    <input type="datetime-local" th:field="*{endDate}" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h5 class="section-title">🎁 รางวัล / ส่วนลด (Reward)</h5>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">มูลค่าส่วนลด (บาท)</label>
+                    <input type="number" step="0.01" min="0" th:field="*{value}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลดบาท">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">มูลค่าส่วนลด (%)</label>
+                    <input type="number" step="0.01" min="0" th:field="*{percent}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลด %">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">จำนวนสินค้าที่แถม</label>
+                    <input type="number" min="0" th:field="*{quantity}" class="form-control" placeholder="เช่น 1">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">สินค้าที่แถมฟรี</label>
+                    <select th:field="*{freeProduct}" class="form-select">
+                        <option value="">-- ไม่มีการแถมสินค้า --</option>
+                        <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productName}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h5 class="section-title">⚖️ เงื่อนไข (Condition)</h5>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">ซื้อขั้นต่ำ (บาท)</label>
+                    <input type="number" step="0.01" min="0" th:field="*{minspend}" class="form-control" placeholder="0.00">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">จำนวนสินค้าที่ต้องซื้อ</label>
+                    <input type="number" min="0" th:field="*{reqQuantity}" class="form-control" placeholder="เช่น 3">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">สินค้าที่ต้องซื้อ (สำหรับโปร Buy X Get Y)</label>
+                    <select th:field="*{reqProduct}" class="form-select">
+                        <option value="">-- ไม่ระบุสินค้าเฉพาะเจาะจง --</option>
+                        <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productName}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary px-5">💾 บันทึกโปรโมชั่น</button>
+                <a th:href="@{/promotion}" class="btn btn-outline-secondary px-5">ยกเลิก</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
