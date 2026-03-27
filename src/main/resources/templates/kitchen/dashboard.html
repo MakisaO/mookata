@@ -26,7 +26,7 @@ body { background-color: #f8f9fa; font-family: 'Kanit', sans-serif; }
         <div class="col-12" th:each="entry : ${groupedOrders}">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-3">
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-                    <h4 class="mb-0 fw-bold">🍽️ โต๊ะ [[${entry.key.tables.tableId}]]</h4>
+                    <h4 class="mb-0 fw-bold">🍽️ โต๊ะ <span th:text="${entry.key.tables != null ? entry.key.tables.tableId : 'ไม่ระบุ'}">-</span></h4>
                     <div class="d-flex align-items-center">
                         <a th:href="@{/kitchen/mass-update/{id}(id=${entry.key.orderId})}" 
                            class="btn btn-sm btn-outline-light me-3 px-3 fw-bold"
