@@ -17,6 +17,11 @@ public class HomeController {
         return "kitchen/dashboard"; // ดึงไฟล์จาก src/main/resources/templates/kitchen/dashboard.html
     }
 
+    @GetMapping("/menu")
+    public String menuList() {
+        return "menu/list";
+    }
+
     @GetMapping("/menu/new")
     public String menuNew() {
         return "menu/form";
