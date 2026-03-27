@@ -4,15 +4,15 @@ import { formatMoney } from "../../../lib/format.js";
 export function OrderSummaryCard({ aggregatedOrders }) {
   return html`
     <div className="app-card p-4 sticky-side">
-      <h5 className="fw-bold mb-3">เธฃเธฒเธขเธเธฒเธฃเธ—เธตเนเธชเธฑเนเธเนเธฅเนเธง</h5>
+      <h5 className="fw-bold mb-3">รายการที่สั่งแล้ว</h5>
       ${(aggregatedOrders || []).length
         ? html`${aggregatedOrders.map((item, index) => html`
             <div className="border-bottom py-2" key=${`${item.product?.productId || index}-${index}`}>
               <div className="fw-semibold">${item.product?.productName}</div>
-              <div className="small text-muted">เธเธณเธเธงเธ ${item.quantity} x ${formatMoney(item.unitPrice)}</div>
+              <div className="small text-muted">จำนวน ${item.quantity} x ${formatMoney(item.unitPrice)} บาท</div>
             </div>
           `)}`
-        : html`<div className="text-muted">เธขเธฑเธเนเธกเนเธกเธตเธฃเธฒเธขเธเธฒเธฃเธญเธฒเธซเธฒเธฃ</div>`}
+        : html`<div className="text-muted">ยังไม่มีรายการอาหารในโต๊ะนี้</div>`}
     </div>
   `;
 }

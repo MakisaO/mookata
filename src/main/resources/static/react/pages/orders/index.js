@@ -15,24 +15,24 @@ export function OrderSelectPage() {
 
   return html`
     <${Page}
-      title="เน€เธฅเธทเธญเธเนเธ•เนเธฐเธชเธณเธซเธฃเธฑเธเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ"
-      eyebrow="เน€เธฃเธดเนเธกเธญเธญเน€เธ”เธญเธฃเน"
+      title="เลือกโต๊ะสำหรับสั่งอาหาร"
+      eyebrow="เริ่มต้นสร้างออเดอร์ใหม่"
       actions=${html`
-        <a href="/" className="btn btn-outline-secondary">เธซเธเนเธฒเธซเธฅเธฑเธ</a>
-        <a href="/tables" className="btn btn-primary">เธเธฑเธ”เธเธฒเธฃเนเธ•เนเธฐ</a>
+        <a href="/" className="btn btn-outline-secondary">กลับหน้าหลัก</a>
+        <a href="/tables" className="btn btn-primary">จัดการโต๊ะ</a>
       `}
     >
       <${Alert} error=${error} />
       <div className="row g-3">
         ${loading
-          ? html`<div className="col-12"><${EmptyState} text="เธเธณเธฅเธฑเธเนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเนเธ•เนเธฐ..." /></div>`
+          ? html`<div className="col-12"><${EmptyState} text="กำลังโหลดข้อมูลโต๊ะ..." /></div>`
           : (tables || []).map((table) => html`
               <div className="col-md-4 col-lg-3" key=${table.tableId}>
                 <a href=${`/orders/${table.tableId}`} className="text-decoration-none text-reset">
                   <div className=${`app-card table-card ${normalizeTableStatus(table.status)} p-4 h-100`}>
-                    <div className="fw-bold fs-4 text-center mb-2">เนเธ•เนเธฐ ${table.tableId}</div>
+                    <div className="fw-bold fs-4 text-center mb-2">โต๊ะ ${table.tableId}</div>
                     <div className="badge text-bg-dark mb-3">${tableStatusLabel(table.status)}</div>
-                    <div className="text-center text-muted">เน€เธเนเธฒเธชเธนเนเธซเธเนเธฒเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ</div>
+                    <div className="text-center text-muted">กดเพื่อเข้าสู่หน้าสั่งอาหาร</div>
                   </div>
                 </a>
               </div>
@@ -57,7 +57,7 @@ export function OrderPage({ tableId }) {
     }, {});
 
     if (!Object.keys(payload).length) {
-      setMessage({ success: "", error: "เธเธฃเธธเธ“เธฒเน€เธฅเธทเธญเธเน€เธกเธเธนเธญเธขเนเธฒเธเธเนเธญเธข 1 เธฃเธฒเธขเธเธฒเธฃ" });
+      setMessage({ success: "", error: "กรุณาเลือกเมนูอย่างน้อย 1 รายการ" });
       return;
     }
 
@@ -73,17 +73,17 @@ export function OrderPage({ tableId }) {
 
   return html`
     <${Page}
-      title=${`เธเธณเธฅเธฑเธเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ เนเธ•เนเธฐ ${tableId}`}
-      eyebrow="เน€เธเธดเนเธกเธฃเธฒเธขเธเธฒเธฃเธญเธฒเธซเธฒเธฃ"
+      title=${`สั่งอาหาร โต๊ะ ${tableId}`}
+      eyebrow="เพิ่มรายการอาหารเข้าบิล"
       actions=${html`
-        <a href="/tables" className="btn btn-outline-secondary">เน€เธเธฅเธตเนเธขเธเนเธ•เนเธฐ</a>
-        <a href=${`/payments/checkout/table/${tableId}`} className="btn btn-success">เนเธเธซเธเนเธฒเธเธณเธฃเธฐเน€เธเธดเธ</a>
+        <a href="/tables" className="btn btn-outline-secondary">กลับหน้าโต๊ะ</a>
+        <a href=${`/payments/checkout/table/${tableId}`} className="btn btn-success">ไปหน้าชำระเงิน</a>
       `}
       fluid=${true}
     >
       <${Alert} error=${error || message.error} success=${message.success} />
       ${loading
-        ? html`<${EmptyState} text="เธเธณเธฅเธฑเธเนเธซเธฅเธ”เน€เธกเธเธน..." />`
+        ? html`<${EmptyState} text="กำลังโหลดเมนู..." />`
         : html`
             <div className="row g-4">
               <div className="col-lg-8">
@@ -93,13 +93,13 @@ export function OrderPage({ tableId }) {
                       <div className="app-card p-3 h-100">
                         <div className="fw-bold mb-1">${product.productName}</div>
                         <div className="text-muted small mb-2">${product.productDetail || "-"}</div>
-                        <div className="text-danger fw-bold mb-3">${formatMoney(product.productPrice)} เธเธฒเธ—</div>
-                        <input className="form-control" type="number" min="0" value=${quantities[product.productId] || ""} onChange=${(e) => setQuantities({ ...quantities, [product.productId]: e.target.value })} placeholder="เธเธณเธเธงเธ" />
+                        <div className="text-danger fw-bold mb-3">${formatMoney(product.productPrice)} บาท</div>
+                        <input className="form-control" type="number" min="0" value=${quantities[product.productId] || ""} onChange=${(e) => setQuantities({ ...quantities, [product.productId]: e.target.value })} placeholder="จำนวน" />
                       </div>
                     </div>
                   `)}
                 </div>
-                <div className="mt-4"><button className="btn btn-primary" onClick=${submitOrder}>เธขเธทเธเธขเธฑเธเธเธฒเธฃเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ</button></div>
+                <div className="mt-4"><button className="btn btn-primary" onClick=${submitOrder}>ยืนยันการสั่งอาหาร</button></div>
               </div>
               <div className="col-lg-4">
                 <${OrderSummaryCard} aggregatedOrders=${data?.aggregatedOrders} />
@@ -117,53 +117,63 @@ export function OrderHistoryPage() {
   const { loading, error, data } = useOrderHistory(page, size);
 
   return html`
-    <${Page} title="เธเธฃเธฐเธงเธฑเธ•เธดเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ" eyebrow="เธเธฃเธฐเธงเธฑเธ•เธดเธเธดเธฅ" actions=${html`<a href="/" className="btn btn-secondary">เธเธฅเธฑเธเธซเธเนเธฒเธซเธฅเธฑเธ</a>`}>
+    <${Page}
+      title="ประวัติบิล"
+      eyebrow="รายการออเดอร์ที่ชำระเงินแล้ว"
+      actions=${html`<a href="/" className="btn btn-secondary">กลับหน้าหลัก</a>`}
+    >
       <${Alert} error=${error} />
       <div className="metric-strip p-4 mb-4">
         <div className="row g-3 align-items-center text-center">
           <div className="col-md-6">
-            <div className="small opacity-75">เธเธณเธเธงเธเธญเธญเน€เธ”เธญเธฃเนเธ—เธฑเนเธเธซเธกเธ”</div>
+            <div className="small opacity-75">จำนวนบิลทั้งหมด</div>
             <div className="fs-2 fw-bold">${data?.totalItems || 0}</div>
           </div>
           <div className="col-md-1 d-none d-md-flex justify-content-center"><div className="metric-divider h-100"></div></div>
           <div className="col-md-5">
-            <div className="small opacity-75">เธฃเธฒเธขเนเธ”เนเธฃเธงเธกเธ—เธฑเนเธเธซเธกเธ”</div>
-            <div className="fs-2 fw-bold">${formatMoney(data?.grandTotal)} เธฟ</div>
+            <div className="small opacity-75">รายได้รวม</div>
+            <div className="fs-2 fw-bold">${formatMoney(data?.grandTotal)} บาท</div>
           </div>
         </div>
       </div>
       <div className="app-card p-4">
         ${loading
-          ? html`<div className="text-center py-4">เธเธณเธฅเธฑเธเนเธซเธฅเธ”เธเธฃเธฐเธงเธฑเธ•เธดเธเธดเธฅ...</div>`
-          : html`
-              <div className="table-responsive">
-                <table className="table align-middle">
-                  <thead>
-                    <tr>
-                      <th>เธงเธฑเธเธ—เธตเน/เน€เธงเธฅเธฒ</th>
-                      <th>เนเธ•เนเธฐ</th>
-                      <th>เธฃเธฒเธขเธเธฒเธฃเธญเธฒเธซเธฒเธฃ</th>
-                      <th>เธขเธญเธ”เธชเธธเธ—เธเธด</th>
-                      <th>เธเธฒเธฃเธเธฑเธ”เธเธฒเธฃ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${(data?.orders || []).map((order) => html`
-                      <tr key=${order.orderId}>
-                        <td>${formatDateTime(order.orderDate)}</td>
-                        <td><span className="badge text-bg-dark">เนเธ•เนเธฐ ${order.tableId ?? "-"}</span></td>
-                        <td>${(order.items || []).join(", ") || "-"}</td>
-                        <td className="fw-bold text-success">${formatMoney(order.totalAmount)} เธฟ</td>
-                        <td><a href=${`/orders/history/${order.orderId}`} className="btn btn-sm btn-outline-primary">เธ”เธนเธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”</a></td>
+          ? html`<div className="text-center py-4">กำลังโหลดประวัติบิล...</div>`
+          : !(data?.orders || []).length
+            ? html`<${EmptyState} text="ยังไม่มีบิลที่ชำระเงินแล้ว" />`
+            : html`
+                <div className="table-responsive">
+                  <table className="table align-middle">
+                    <thead>
+                      <tr>
+                        <th>วันเวลา</th>
+                        <th>โต๊ะ</th>
+                        <th>รายการอาหาร</th>
+                        <th>ยอดสุทธิ</th>
+                        <th>จัดการ</th>
                       </tr>
-                    `)}
-                  </tbody>
-                </table>
-              </div>
-              <div className="d-flex justify-content-center gap-2 flex-wrap">
-                ${Array.from({ length: data?.totalPages || 0 }, (_, idx) => idx).map((idx) => html`<button className=${`btn btn-sm ${idx === page ? "btn-primary" : "btn-outline-primary"}`} onClick=${() => setPage(idx)}>${idx + 1}</button>`)}
-              </div>
-            `}
+                    </thead>
+                    <tbody>
+                      ${(data.orders || []).map((order) => html`
+                        <tr key=${order.orderId}>
+                          <td>${formatDateTime(order.orderDate)}</td>
+                          <td><span className="badge text-bg-dark">โต๊ะ ${order.tableId ?? "-"}</span></td>
+                          <td>${(order.items || []).join(", ") || "-"}</td>
+                          <td className="fw-bold text-success">${formatMoney(order.totalAmount)} บาท</td>
+                          <td><a href=${`/orders/history/${order.orderId}`} className="btn btn-sm btn-outline-primary">ดูรายละเอียด</a></td>
+                        </tr>
+                      `)}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="d-flex justify-content-center gap-2 flex-wrap">
+                  ${Array.from({ length: data?.totalPages || 0 }, (_, idx) => idx).map((idx) => html`
+                    <button className=${`btn btn-sm ${idx === page ? "btn-primary" : "btn-outline-primary"}`} onClick=${() => setPage(idx)}>
+                      ${idx + 1}
+                    </button>
+                  `)}
+                </div>
+              `}
       </div>
     <//>
   `;
@@ -172,27 +182,45 @@ export function OrderHistoryPage() {
 export function OrderDetailPage({ id }) {
   const { loading, error, data } = useOrderDetail(id);
   return html`
-    <${Page} title=${`เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธเธดเธฅ #${id}`} eyebrow="เธฃเธฒเธขเธเธฒเธฃเธญเธฒเธซเธฒเธฃเนเธเธเธดเธฅ" actions=${html`<a href="/orders/history" className="btn btn-outline-secondary">เธเธฅเธฑเธ</a>`}>
+    <${Page}
+      title=${`รายละเอียดบิล #${id}`}
+      eyebrow="ตรวจสอบรายการอาหารในบิล"
+      actions=${html`<a href="/orders/history" className="btn btn-outline-secondary">กลับหน้าประวัติ</a>`}
+    >
       <${Alert} error=${error} />
       ${loading
-        ? html`<${EmptyState} text="เธเธณเธฅเธฑเธเนเธซเธฅเธ”เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธเธดเธฅ..." />`
+        ? html`<${EmptyState} text="กำลังโหลดรายละเอียดบิล..." />`
         : html`
             <div className="row g-4">
               <div className="col-lg-4">
                 <div className="app-card p-4">
-                  <div className="mb-2">เนเธ•เนเธฐ: <strong>${data?.tableId ?? "-"}</strong></div>
-                  <div className="mb-2">เธงเธฑเธเธ—เธตเน: <strong>${formatDateTime(data?.orderDate)}</strong></div>
-                  <div className="mb-2">เธชเธ–เธฒเธเธฐ: <strong>${data?.orderStatus || "-"}</strong></div>
-                  <div>เธขเธญเธ”เธฃเธงเธก: <strong>${formatMoney(data?.totalAmount)} เธฟ</strong></div>
+                  <div className="mb-2">โต๊ะ: <strong>${data?.tableId ?? "-"}</strong></div>
+                  <div className="mb-2">วันเวลา: <strong>${formatDateTime(data?.orderDate)}</strong></div>
+                  <div className="mb-2">สถานะ: <strong>${data?.orderStatus || "-"}</strong></div>
+                  <div>ยอดรวม: <strong>${formatMoney(data?.totalAmount)} บาท</strong></div>
                 </div>
               </div>
               <div className="col-lg-8">
                 <div className="app-card p-4">
                   <div className="table-responsive">
                     <table className="table align-middle">
-                      <thead><tr><th>เน€เธกเธเธน</th><th>เธเธณเธเธงเธ</th><th>เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข</th><th>เธฃเธฒเธเธฒเธฃเธงเธก</th></tr></thead>
+                      <thead>
+                        <tr>
+                          <th>เมนู</th>
+                          <th>จำนวน</th>
+                          <th>ราคาต่อหน่วย</th>
+                          <th>ราคารวม</th>
+                        </tr>
+                      </thead>
                       <tbody>
-                        ${(data?.items || []).map((item, index) => html`<tr key=${`${item.productName}-${index}`}><td>${item.productName}</td><td>${item.quantity}</td><td>${formatMoney(item.unitPrice)}</td><td>${formatMoney(item.lineTotal)}</td></tr>`)}
+                        ${(data?.items || []).map((item, index) => html`
+                          <tr key=${`${item.productName}-${index}`}>
+                            <td>${item.productName}</td>
+                            <td>${item.quantity}</td>
+                            <td>${formatMoney(item.unitPrice)} บาท</td>
+                            <td>${formatMoney(item.lineTotal)} บาท</td>
+                          </tr>
+                        `)}
                       </tbody>
                     </table>
                   </div>
@@ -209,7 +237,7 @@ export function CheckoutPage({ tableId }) {
   const { loading, error, data } = useCheckoutPage(tableId, message.success);
 
   async function processPayment() {
-    if (!window.confirm("เธขเธทเธเธขเธฑเธเธเธณเธฃเธฐเน€เธเธดเธเนเธ•เนเธฐเธเธตเนเนเธเนเธซเธฃเธทเธญเนเธกเน")) return;
+    if (!window.confirm("ยืนยันชำระเงินสำหรับโต๊ะนี้ใช่หรือไม่")) return;
     try {
       const result = await ordersService.checkout(tableId);
       setMessage({ success: result.message, error: "" });
@@ -223,27 +251,34 @@ export function CheckoutPage({ tableId }) {
 
   return html`
     <${Page}
-      title=${`เธเธณเธฃเธฐเน€เธเธดเธ เนเธ•เนเธฐ ${tableId}`}
-      eyebrow="เธชเธฃเธธเธเธฃเธฒเธขเธเธฒเธฃเธเนเธญเธเธเธณเธฃเธฐเน€เธเธดเธ"
+      title=${`ชำระเงิน โต๊ะ ${tableId}`}
+      eyebrow="สรุปรายการก่อนชำระเงิน"
       actions=${html`
-        <a href=${`/orders/${tableId}`} className="btn btn-outline-secondary">เธเธฅเธฑเธเนเธเธซเธเนเธฒเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ</a>
-        <a href="/tables" className="btn btn-primary">เธซเธเนเธฒเนเธ•เนเธฐ</a>
+        <a href=${`/orders/${tableId}`} className="btn btn-outline-secondary">กลับหน้าสั่งอาหาร</a>
+        <a href="/tables" className="btn btn-primary">กลับหน้าโต๊ะ</a>
       `}
     >
       <${Alert} error=${error || message.error} success=${message.success} />
       ${loading
-        ? html`<${EmptyState} text="เธเธณเธฅเธฑเธเนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเธเธณเธฃเธฐเน€เธเธดเธ..." />`
+        ? html`<${EmptyState} text="กำลังโหลดข้อมูลการชำระเงิน..." />`
         : html`
             <div className="row g-4">
               <div className="col-lg-8">
                 <div className="app-card overflow-hidden">
-                  <div className="checkout-header p-4"><h4 className="fw-bold mb-0">เธฃเธฒเธขเธเธฒเธฃเธญเธฒเธซเธฒเธฃเธ—เธตเนเธชเธฑเนเธ</h4></div>
+                  <div className="checkout-header p-4"><h4 className="fw-bold mb-0">รายการอาหารที่สั่ง</h4></div>
                   <div className="p-4">
                     <div className="table-responsive">
                       <table className="table align-middle">
-                        <thead><tr><th>เน€เธกเธเธน</th><th>เธเธณเธเธงเธ</th><th>เธฃเธฒเธเธฒเธ•เนเธญเธซเธเนเธงเธข</th><th>เธฃเธงเธก</th></tr></thead>
+                        <thead><tr><th>เมนู</th><th>จำนวน</th><th>ราคาต่อหน่วย</th><th>รวม</th></tr></thead>
                         <tbody>
-                          ${(data?.aggregatedOrders || []).map((item, index) => html`<tr key=${`${item.product?.productId || index}-${index}`}><td>${item.product?.productName}</td><td>${item.quantity}</td><td>${formatMoney(item.unitPrice)}</td><td>${formatMoney(item.totalPrice)}</td></tr>`)}
+                          ${(data?.aggregatedOrders || []).map((item, index) => html`
+                            <tr key=${`${item.product?.productId || index}-${index}`}>
+                              <td>${item.product?.productName}</td>
+                              <td>${item.quantity}</td>
+                              <td>${formatMoney(item.unitPrice)} บาท</td>
+                              <td>${formatMoney(item.totalPrice)} บาท</td>
+                            </tr>
+                          `)}
                         </tbody>
                       </table>
                     </div>
@@ -252,12 +287,12 @@ export function CheckoutPage({ tableId }) {
               </div>
               <div className="col-lg-4">
                 <div className="app-card p-4">
-                  <div className="d-flex justify-content-between mb-2"><span>เธขเธญเธ”เธเนเธญเธเธฅเธ”</span><strong>${formatMoney(data?.originalTotal)} เธฟ</strong></div>
-                  <div className="d-flex justify-content-between mb-2"><span>เธชเนเธงเธเธฅเธ”</span><strong className="text-danger">-${formatMoney(data?.discount)} เธฟ</strong></div>
+                  <div className="d-flex justify-content-between mb-2"><span>ยอดก่อนลด</span><strong>${formatMoney(data?.originalTotal)} บาท</strong></div>
+                  <div className="d-flex justify-content-between mb-2"><span>ส่วนลด</span><strong className="text-danger">-${formatMoney(data?.discount)} บาท</strong></div>
                   ${(data?.promoMessages || []).length ? html`<ul className="small text-success ps-3">${data.promoMessages.map((item, index) => html`<li key=${index}>${item}</li>`)}</ul>` : null}
                   <hr />
-                  <div className="d-flex justify-content-between fs-4 fw-bold mb-3"><span>เธขเธญเธ”เธชเธธเธ—เธเธด</span><span>${formatMoney(data?.finalTotal)} เธฟ</span></div>
-                  <button className="btn btn-success w-100" onClick=${processPayment}>เธขเธทเธเธขเธฑเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ</button>
+                  <div className="d-flex justify-content-between fs-4 fw-bold mb-3"><span>ยอดสุทธิ</span><span>${formatMoney(data?.finalTotal)} บาท</span></div>
+                  <button className="btn btn-success w-100" onClick=${processPayment}>ยืนยันการชำระเงิน</button>
                 </div>
               </div>
             </div>
