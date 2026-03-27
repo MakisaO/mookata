@@ -5,6 +5,6 @@ export const menuService = {
   categories: () => fetchJson("/api/categories"),
   getProduct: (id) => fetchJson(`/api/products/${id}`),
   createProduct: (payload) => fetchJson("/api/products", { method: "POST", body: JSON.stringify(payload) }),
-  updateProduct: (id, payload) => fetchJson(`/api/products/${id}`, { method: "POST", body: JSON.stringify(payload) }),
-  deleteProduct: (id) => fetchJson(`/api/products/${id}/delete`, { method: "POST" }),
+  updateProduct: (id, payload) => fetchJson(`/api/products/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
+  deleteProduct: (id) => fetchJson(`/api/products/${id}`, { method: "DELETE" }),
 };

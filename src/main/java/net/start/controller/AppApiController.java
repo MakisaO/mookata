@@ -6,12 +6,16 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,7 +52,7 @@ import net.start.service.TablesService;
 import net.start.repository.OrderDetailRepository;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(value = "/api", produces = MediaType.APPLICATION_JSON_VALUE)
 public class AppApiController {
 
     @Autowired
@@ -86,21 +90,21 @@ public class AppApiController {
         }
     }
 
-    @PostMapping("/tables")
+    @PostMapping(value = "/tables", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createTable(@RequestBody TableRequest request) {
         Tables table = new Tables();
         table.setStatus(request.getStatus());
         return ResponseEntity.status(HttpStatus.CREATED).body(tablesService.save(table));
     }
 
-    @PostMapping("/tables/{id}")
+    @PutMapping(value = "/tables/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateTable(@PathVariable("id") Integer id, @RequestBody TableRequest request) {
         Tables table = tablesService.findById(id);
         table.setStatus(request.getStatus());
         return ResponseEntity.ok(tablesService.save(table));
     }
 
-    @PostMapping("/tables/{id}/delete")
+    @DeleteMapping("/tables/{id}")
     public ResponseEntity<ApiMessageResponse> deleteTable(@PathVariable("id") Integer id) {
         tablesService.deleteById(id);
         return ResponseEntity.ok(new ApiMessageResponse("Deleted table"));
@@ -128,13 +132,13 @@ public class AppApiController {
         return ResponseEntity.ok(categoriesService.findAll());
     }
 
-    @PostMapping("/products")
+    @PostMapping(value = "/products", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createProduct(@RequestBody Product product) {
         productService.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
-    @PostMapping("/products/{id}")
+    @PutMapping(value = "/products/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateProduct(@PathVariable("id") Integer id, @RequestBody Product productRequest) {
         Product product = productService.findById(id);
         product.setProductName(productRequest.getProductName());
@@ -146,7 +150,7 @@ public class AppApiController {
         return ResponseEntity.ok(product);
     }
 
-    @PostMapping("/products/{id}/delete")
+    @DeleteMapping("/products/{id}")
     public ResponseEntity<ApiMessageResponse> deleteProduct(@PathVariable("id") Integer id) {
         productService.deleteById(id);
         return ResponseEntity.ok(new ApiMessageResponse("Deleted product"));
@@ -165,7 +169,7 @@ public class AppApiController {
         }
     }
 
-    @PostMapping("/orders")
+    @PostMapping(value = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiMessageResponse> createOrder(@RequestBody OrderCreateRequest request) {
         try {
             ordermenuService.createOrder(request.getTableId(), request.getQuantities());
@@ -227,20 +231,20 @@ public class AppApiController {
         }
     }
 
-    @PostMapping("/promotions")
+    @PostMapping(value = "/promotions", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createPromotion(@RequestBody Promotion promotion) {
         promotionService.save(promotion);
         return ResponseEntity.status(HttpStatus.CREATED).body(promotion);
     }
 
-    @PostMapping("/promotions/{id}")
+    @PutMapping(value = "/promotions/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updatePromotion(@PathVariable("id") Integer id, @RequestBody Promotion promotion) {
         promotion.setPromotionId(id);
         promotionService.save(promotion);
         return ResponseEntity.ok(promotion);
     }
 
-    @PostMapping("/promotions/{id}/delete")
+    @DeleteMapping("/promotions/{id}")
     public ResponseEntity<ApiMessageResponse> deletePromotion(@PathVariable("id") Integer id) {
         promotionService.deleteById(id);
         return ResponseEntity.ok(new ApiMessageResponse("Deleted promotion"));
@@ -279,7 +283,7 @@ public class AppApiController {
         return ResponseEntity.ok(new KitchenDashboardData(rounds));
     }
 
-    @PostMapping("/kitchen/items/{detailId}/cook")
+    @PatchMapping("/kitchen/items/{detailId}/cook")
     public ResponseEntity<ApiMessageResponse> markCooking(@PathVariable("detailId") Integer detailId) {
         OrderDetail detail = orderDetailRepository.findById(detailId).orElseThrow(() -> new IllegalArgumentException("Item not found"));
         detail.setItemStatus("cooking");
@@ -287,7 +291,7 @@ public class AppApiController {
         return ResponseEntity.ok(new ApiMessageResponse("Updated item to cooking"));
     }
 
-    @PostMapping("/kitchen/items/{detailId}/serve")
+    @PatchMapping("/kitchen/items/{detailId}/serve")
     public ResponseEntity<ApiMessageResponse> markServed(@PathVariable("detailId") Integer detailId) {
         OrderDetail detail = orderDetailRepository.findById(detailId).orElseThrow(() -> new IllegalArgumentException("Item not found"));
         detail.setItemStatus("served");
@@ -295,7 +299,7 @@ public class AppApiController {
         return ResponseEntity.ok(new ApiMessageResponse("Updated item to served"));
     }
 
-    @PostMapping("/kitchen/orders/{orderId}/mass-update")
+    @PatchMapping("/kitchen/orders/{orderId}/mass-update")
     public ResponseEntity<ApiMessageResponse> massUpdateKitchenOrder(@PathVariable("orderId") Integer orderId) {
         List<OrderDetail> items = orderDetailRepository.findByItemStatusInOrderByDetailIdAsc(List.of("ordered", "cooking"))
                 .stream()
@@ -337,7 +341,7 @@ public class AppApiController {
         }
     }
 
-    @PostMapping("/tables/{tableId}/reset")
+    @PatchMapping("/tables/{tableId}/reset")
     public ResponseEntity<ApiMessageResponse> resetTable(@PathVariable("tableId") Integer tableId) {
         try {
             paymentService.resetTableStatus(tableId);
