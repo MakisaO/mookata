@@ -26,17 +26,20 @@ public class MenuController {
     @Autowired
     private CategoriesService categoriesService;
 
-    // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้าและค้นหา
+ // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้า ค้นหา และกรองตามหมวดหมู่
     @GetMapping("")
     public String listMenu(
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryId", required = false) Integer categoryId, // 🌟 เพิ่มการรับค่า categoryId
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "sortField", defaultValue = "productId") String sortField,
             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
             Model model) {
         
         int pageSize = 10;
-        Page<Product> productPage = productService.findPaginated(keyword, page, pageSize, sortField, sortDir);
+        
+        // 🌟 อัปเดตการเรียกใช้ Service ให้ส่ง categoryId ไปด้วย
+        Page<Product> productPage = productService.findPaginated(keyword, categoryId, page, pageSize, sortField, sortDir);
         
         model.addAttribute("products", productPage.getContent());
         model.addAttribute("currentPage", page);
@@ -46,6 +49,10 @@ public class MenuController {
         model.addAttribute("sortField", sortField);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+
+        // 🌟 2 บรรทัดนี้สำคัญมาก สำหรับสร้างปุ่มหมวดหมู่บนหน้าเว็บ
+        model.addAttribute("categories", categoriesService.findAll()); // ส่งรายการหมวดหมู่ทั้งหมดไปสร้างปุ่ม
+        model.addAttribute("activeCategoryId", categoryId);            // ส่ง ID หมวดหมู่ปัจจุบันไปทำสีปุ่มให้เข้มขึ้น
 
         return "menu/list";
     }

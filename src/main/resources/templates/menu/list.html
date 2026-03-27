@@ -3,163 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <title>จัดการเมนูอาหาร - Mookata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Tahoma', sans-serif; padding: 30px; background-color: #f4f7f6; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2 { color: #333; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
-        th { background-color: #ff5722; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        
-        /* สไตล์เพิ่มเติมสำหรับรายละเอียด */
-        .detail-col { 
-            text-align: left; 
-            max-width: 250px; 
-            font-size: 13px; 
-            color: #666;
-            word-wrap: break-word; /* ให้ตัดคำถ้าข้อความยาวเกิน */
-        }
-
-        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; color: white; font-size: 14px; }
-        .btn-add { background-color: #4CAF50; margin-bottom: 20px; display: inline-block; }
-        .btn-edit { background-color: #ff9800; }
-        .btn-home { background-color: #607d8b; margin-top: 20px; display: inline-block; }
-        
-        .search-container { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
-        .search-box { display: flex; gap: 10px; align-items: center; }
-        .search-input { padding: 9px; border: 1px solid #ddd; border-radius: 5px; width: 250px; font-size: 14px; }
-        .btn-search { background-color: #2196F3; margin: 0; display: inline-block; }
-        .btn-clear { background-color: #9e9e9e; margin: 0; display: inline-block; }
-        
-        .pagination { display: flex; list-style: none; padding: 0; justify-content: center; gap: 5px; margin-top: 30px; }
-        .page-item { margin: 0; }
-        .page-link { padding: 8px 14px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; font-size: 14px; }
-        .page-item.active .page-link { background-color: #ff5722; color: white; border-color: #ff5722; font-weight: bold; }
-        .page-item.disabled .page-link { color: #ccc; pointer-events: none; background-color: #f9f9f9;}
-        
-        .sort-link { color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .sort-link:hover { text-decoration: underline; }
-
-        .sort-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 3px;
-            font-size: 12px;
-            margin-left: 5px;
-            transition: background-color 0.2s;
-        }
-        .sort-btn:hover { background-color: rgba(255, 255, 255, 0.4); }
-        .sort-btn.active { background-color: white; color: #ff5722; font-weight: bold; }
+        /* ซ่อน Scrollbar สำหรับแถบหมวดหมู่แต่ยังเลื่อน (Swipe/Scroll) ได้ */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h2>📋 รายการเมนูอาหารในร้าน</h2>
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
+
+    <div class="max-w-5xl mx-auto p-4 pt-10 pb-20">
         
-        <div class="search-container">
-            <a th:href="@{/menu/new}" class="btn btn-add" style="margin-bottom:0;">+ เพิ่มเมนูอาหารใหม่</a>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                <i class="fa-solid fa-utensils mr-3 text-blue-600"></i> จัดการเมนูอาหาร
+            </h2>
+            <a th:href="@{/menu/new}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm">
+                <i class="fa-solid fa-plus"></i> เพิ่มเมนูใหม่
+            </a>
+        </div>
+
+        <div class="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
+            <a th:href="@{/menu(keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}" 
+               class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200"
+               th:classappend="${activeCategoryId == null} ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'">
+                ทั้งหมด
+            </a>
             
-            <form th:action="@{/menu}" method="get" class="search-box" id="searchForm">
-                <input type="text" name="keyword" class="search-input" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}">
+            <th:block th:each="cat : ${categories}">
+                <a th:href="@{/menu(categoryId=${cat.categoriesId}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}"
+                   class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200"
+                   th:classappend="${activeCategoryId == cat.categoriesId} ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'"
+                   th:text="${cat.categoriesName}">
+                    ชื่อหมวดหมู่
+                </a>
+            </th:block>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            
+            <div class="flex overflow-x-auto gap-2 pb-2 w-full md:w-auto scrollbar-hide">
+                <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, categoryId=${activeCategoryId}, sortField='productName', sortDir=${sortField == 'productName' ? reverseSortDir : 'asc'})}" 
+                   class="px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors"
+                   th:classappend="${sortField == 'productName'} ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'">
+                   เรียงตามชื่อ <i th:class="${sortField == 'productName' ? (sortDir == 'asc' ? 'fa-solid fa-arrow-up-a-z ml-1' : 'fa-solid fa-arrow-down-z-a ml-1') : 'fa-solid fa-sort ml-1'}"></i>
+                </a>
+                
+                <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, categoryId=${activeCategoryId}, sortField='productPrice', sortDir=${sortField == 'productPrice' ? reverseSortDir : 'asc'})}" 
+                   class="px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors"
+                   th:classappend="${sortField == 'productPrice'} ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'">
+                   เรียงตามราคา <i th:class="${sortField == 'productPrice' ? (sortDir == 'asc' ? 'fa-solid fa-arrow-up-1-9 ml-1' : 'fa-solid fa-arrow-down-9-1 ml-1') : 'fa-solid fa-sort ml-1'}"></i>
+                </a>
+            </div>
+
+            <form th:action="@{/menu}" method="get" id="searchForm" class="relative w-full md:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                <input type="text" name="keyword" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}" 
+                       class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm transition-all text-sm">
                 <input type="hidden" name="sortField" th:value="${sortField}">
                 <input type="hidden" name="sortDir" th:value="${sortDir}">
+                <input type="hidden" name="categoryId" th:value="${activeCategoryId}" th:if="${activeCategoryId != null}">
             </form>
         </div>
-        
-        <table th:if="${totalItems > 0}">
-            <thead>
-                <tr>
-                    <th>
-                        หมวดหมู่
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='categories.categoriesName', sortDir=${sortField == 'categories.categoriesName' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'categories.categoriesName'} ? 'active'">
-                            <span th:text="${sortField == 'categories.categoriesName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
-                    </th>
-                    <th>
-                        ชื่อเมนู
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productName', sortDir=${sortField == 'productName' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productName'} ? 'active'">
-                            <span th:text="${sortField == 'productName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
-                    </th>
-                    <th>รายละเอียด</th> 
-                    <th>
-                        ราคา
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productPrice', sortDir=${sortField == 'productPrice' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productPrice'} ? 'active'">
-                            <span th:text="${sortField == 'productPrice' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
-                    </th>
-                    <th>
-                        สถานะ
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productStatus', sortDir=${sortField == 'productStatus' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productStatus'} ? 'active'">
-                            <span th:text="${sortField == 'productStatus' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
-                    </th>
-                    <th>จัดการ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="p : ${products}">
-                    <td th:text="${p.categories != null ? p.categories.categoriesName : '-'}" style="font-size: 14px; color: #555;">หมวดหมู่</td>
 
-                    <td th:text="${p.productName}" style="text-align: left; font-weight: bold;">ชุดหมูรวมมิตร</td>
+        <div th:if="${totalItems > 0}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            <div th:each="p : ${products}" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 relative group hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+                
+                
+               <div class="text-4xl bg-slate-50 p-3 rounded-xl w-16 h-16 flex items-center justify-center border border-slate-100 shadow-inner">
+                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'สามชั้น') or #strings.containsIgnoreCase(p.productName, 'เบคอน')}">🥓</th:block>
+                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'สามชั้น') or #strings.containsIgnoreCase(p.productName, 'เบคอน')}">
+                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'กุ้ง')}">🦐</th:block>
+                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'กุ้ง')}">
+                            <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'หมึก')}">🦑</th:block>
+                            <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'หมึก')}">
+                                <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ไข่')}">🥚</th:block>
+                                <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ไข่')}">
+                                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ชีส')}">🧀</th:block>
+                                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ชีส')}">
+                                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ลูกชิ้น')}">🍢</th:block>
+                                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ลูกชิ้น')}">
+                                            <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ข้าวโพด')}">🌽</th:block>
+                                            <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ข้าวโพด')}">
+                                                <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'เห็ด')}">🍄</th:block>
+                                                <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'เห็ด')}">
+                                                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'น้ำแข็ง')}">🧊</th:block>
+                                                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'น้ำแข็ง')}">
+                                                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'น้ำเปล่า')}">💧</th:block>
+                                                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'น้ำเปล่า')}">
+                                                            
+                                                            <th:block th:switch="${p.categories != null ? p.categories.categoriesName : ''}">
+                                                                <span th:case="'เนื้อสัตว์'">🥩</span> <span th:case="'อาหารทะเล'">🐟</span>
+                                                                <span th:case="'ของทานเล่น'">🧆</span>
+                                                                <span th:case="'ผัก'">🥬</span>
+                                                                <span th:case="'เส้น'">🍜</span>
+                                                                <span th:case="'เครื่องดื่ม'">🥤</span>
+                                                                <span th:case="'เซ็ต'">🥘</span>
+                                                                <span th:case="*">🍽️</span> </th:block>
+
+                                                        </th:block>
+                                                    </th:block>
+                                                </th:block>
+                                            </th:block>
+                                        </th:block>
+                                    </th:block>
+                                </th:block>
+                            </th:block>
+                        </th:block>
+                    </th:block>
+                </div>
+                
+                
+                <div class="flex-1">
+                    <h3 class="font-bold text-slate-800 text-lg leading-tight" th:text="${p.productName}">ชื่อเมนู</h3>
+                    <p class="text-sm text-slate-500 mt-0.5" th:text="${p.categories != null ? p.categories.categoriesName : '-'}">หมวดหมู่</p>
                     
-                    <td th:text="${p.productDetail}" class="detail-col">รายละเอียดสินค้าจะแสดงที่นี่</td>
-                    
-                    <td th:text="${p.productPrice}">299</td>
-                    
-                    <td>
-                        <span th:text="${p.productStatus == 'available' ? 'พร้อมขาย' : 'หมด'}"
-                              th:style="${p.productStatus == 'available' ? 'color: green;' : 'color: red;'}">
-                        </span>
-                    </td>
-                    
-                    <td>
-                        <a th:href="@{/menu/edit/{id}(id=${p.productId})}" class="btn btn-edit">แก้ไข</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div th:if="${totalItems == 0}" style="text-align: center; padding: 40px; color: #888; background: #f9f9f9; border-radius: 5px; margin-top: 20px;">
-            <p>ไม่พบรายการอาหารที่ค้นหา</p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <p class="text-orange-600 font-bold text-lg">฿<span th:text="${#numbers.formatDecimal(p.productPrice, 1, 'COMMA', 2, 'POINT')}">69.00</span></p>
+                        
+                        <span th:if="${p.productStatus == 'available'}" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">พร้อมขาย</span>
+                        <span th:if="${p.productStatus != 'available'}" class="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">สินค้าหมด</span>
+                    </div>
+                </div>
+
+                <div class="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a th:href="@{/menu/edit/{id}(id=${p.productId})}" class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors shadow-sm" title="แก้ไข">
+                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                    </a>
+                    <a th:href="@{/menu/delete/{id}(id=${p.productId})}" class="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-colors shadow-sm" onclick="return confirm('ยืนยันการลบเมนูนี้?');" title="ลบ">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </a>
+                </div>
+            </div>
         </div>
-        
-        <div th:if="${totalPages > 1}">
-            <ul class="pagination">
-                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">« ก่อนหน้า</a>
+
+        <div th:if="${totalItems == 0}" class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500 mt-4 shadow-sm">
+            <i class="fa-solid fa-box-open text-6xl mb-4 text-slate-200"></i>
+            <p class="text-xl font-bold text-slate-700">ไม่พบรายการอาหาร</p>
+            <p class="text-sm text-slate-400 mt-2">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่นดูอีกครั้ง</p>
+            <a th:href="@{/menu}" class="inline-block mt-4 text-blue-600 hover:underline text-sm font-medium">เคลียร์การค้นหาทั้งหมด</a>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="flex justify-center mt-12">
+            <ul class="flex items-center gap-2">
+                <li th:classappend="${currentPage == 1} ? 'opacity-50 pointer-events-none'">
+                    <a th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
+                       class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                        <i class="fa-solid fa-chevron-left text-sm"></i>
+                    </a>
                 </li>
                 
-                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
-                    th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/menu(page=${i}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}" th:text="${i}">1</a>
+                <li th:each="i : ${#numbers.sequence(1, totalPages)}">
+                    <a th:href="@{/menu(page=${i}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
+                       th:text="${i}"
+                       th:class="${currentPage == i} ? 'flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl font-bold shadow-md transition-colors transform scale-105' : 'flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm'">
+                    </a>
                 </li>
                 
-                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">ถัดไป »</a>
+                <li th:classappend="${currentPage == totalPages} ? 'opacity-50 pointer-events-none'">
+                    <a th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
+                       class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                        <i class="fa-solid fa-chevron-right text-sm"></i>
+                    </a>
                 </li>
             </ul>
         </div>
-        
-        <a th:href="@{/}" class="btn btn-home">กลับหน้าหลัก</a>
+
+        <div class="mt-12 border-t border-slate-200 pt-6">
+            <a th:href="@{/}" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium transition-colors bg-white px-5 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-sm">
+                <i class="fa-solid fa-house text-sm"></i> กลับหน้าหลัก (Home)
+            </a>
+        </div>
+
     </div>
 
     <script>
         let timeout = null;
         const searchInput = document.getElementById('searchInput');
         if(searchInput) {
-            // Keep focus and put cursor at the end
+            // ดัน Cursor ไปอยู่ท้ายข้อความเสมอเวลาพิมพ์
             const val = searchInput.value;
             searchInput.focus();
             searchInput.value = '';
@@ -169,7 +193,7 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(function () {
                     document.getElementById('searchForm').submit();
-                }, 200); // 200ms debounce
+                }, 400); // หน่วงเวลา 400ms ก่อนส่งค่าไปค้นหา
             });
         }
     </script>

@@ -41,16 +41,23 @@ public class ProductService {
         productRepository.deleteById(id);
     }
     
-    public Page<Product> findPaginated(String keyword, int pageNo, int pageSize, String sortField, String sortDir) {
+    // 🌟 อัปเดตเมธอดนี้ ให้รับ Integer categoryId เพิ่ม และเรียกใช้ searchAndFilter
+    public Page<Product> findPaginated(String keyword, Integer categoryId, int pageNo, int pageSize, String sortField, String sortDir) {
         org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase(org.springframework.data.domain.Sort.Direction.ASC.name()) ? 
             org.springframework.data.domain.Sort.by(sortField).ascending() : 
             org.springframework.data.domain.Sort.by(sortField).descending();
         
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize, sort);
-        if (keyword != null && !keyword.isEmpty()) {
-            return productRepository.findByProductNameContainingIgnoreCase(keyword, pageable);
-        }
-        return productRepository.findAll(pageable);
+        
+        // ถ้า keyword เป็นค่าว่าง ("") ให้แปลงเป็น null เพื่อให้ Query ทำงานได้ถูกต้อง
+        String finalKeyword = (keyword != null && !keyword.isEmpty()) ? keyword : null;
+        
+        // โยนงานให้ Repository จัดการ
+        return productRepository.searchAndFilter(finalKeyword, categoryId, pageable);
+    }
+ // 🌟 2. เพิ่มเมธอดนี้ สำหรับหน้า "สั่งอาหาร" โดยเฉพาะ 🌟
+    public List<Product> findAvailableByCategoryId(Integer categoryId) {
+        return productRepository.findAvailableAndFilterByCategory(categoryId);
     }
 
 }
