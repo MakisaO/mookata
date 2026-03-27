@@ -10,4 +10,35 @@ public class HomeController {
     public String index() {
         return "index";
     }
+
+    // เพิ่มหน้าต่างสำหรับเข้าหน้า Kitchen Dashboard
+    @GetMapping("/kitchen")
+    public String kitchen() {
+        return "kitchen/dashboard"; // ดึงไฟล์จาก src/main/resources/templates/kitchen/dashboard.html
+    }
+
+    @GetMapping("/menu/new")
+    public String menuNew() {
+        return "menu/form";
+    }
+
+    @GetMapping("/menu/edit/{id}")
+    public String menuEdit() {
+        return "menu/form";
+    }
+
+    @GetMapping("/orders/history")
+    public String orderHistory() {
+        return "orders/history";
+    }
+
+    @GetMapping("/orders/history/{id}")
+    public String orderDetail() {
+        return "orders/detail";
+    }
+
+    @GetMapping("/orders/{id}")
+    public String orderForm() {
+        return "orders/form"; // ดึงไฟล์จาก src/main/resources/templates/orders/form.html
+    }
 }

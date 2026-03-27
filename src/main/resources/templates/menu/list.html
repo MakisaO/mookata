@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <title>จัดการเมนูอาหาร - Mookata</title>
@@ -12,16 +12,15 @@
         th { background-color: #ff5722; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         
-        /* สไตล์เพิ่มเติมสำหรับรายละเอียด */
         .detail-col { 
             text-align: left; 
             max-width: 250px; 
             font-size: 13px; 
             color: #666;
-            word-wrap: break-word; /* ให้ตัดคำถ้าข้อความยาวเกิน */
+            word-wrap: break-word; 
         }
 
-        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; color: white; font-size: 14px; }
+        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; color: white; font-size: 14px; cursor: pointer; border: none; }
         .btn-add { background-color: #4CAF50; margin-bottom: 20px; display: inline-block; }
         .btn-edit { background-color: #ff9800; }
         .btn-home { background-color: #607d8b; margin-top: 20px; display: inline-block; }
@@ -29,18 +28,13 @@
         .search-container { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
         .search-box { display: flex; gap: 10px; align-items: center; }
         .search-input { padding: 9px; border: 1px solid #ddd; border-radius: 5px; width: 250px; font-size: 14px; }
-        .btn-search { background-color: #2196F3; margin: 0; display: inline-block; }
-        .btn-clear { background-color: #9e9e9e; margin: 0; display: inline-block; }
         
         .pagination { display: flex; list-style: none; padding: 0; justify-content: center; gap: 5px; margin-top: 30px; }
         .page-item { margin: 0; }
-        .page-link { padding: 8px 14px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; font-size: 14px; }
+        .page-link { padding: 8px 14px; border: 1px solid #ddd; text-decoration: none; color: #333; border-radius: 4px; font-size: 14px; cursor: pointer; background: white; }
         .page-item.active .page-link { background-color: #ff5722; color: white; border-color: #ff5722; font-weight: bold; }
         .page-item.disabled .page-link { color: #ccc; pointer-events: none; background-color: #f9f9f9;}
         
-        .sort-link { color: white; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .sort-link:hover { text-decoration: underline; }
-
         .sort-btn {
             display: inline-flex;
             align-items: center;
@@ -54,9 +48,13 @@
             font-size: 12px;
             margin-left: 5px;
             transition: background-color 0.2s;
+            cursor: pointer;
+            border: none;
         }
         .sort-btn:hover { background-color: rgba(255, 255, 255, 0.4); }
         .sort-btn.active { background-color: white; color: #ff5722; font-weight: bold; }
+
+        #loading-overlay { text-align: center; padding: 40px; color: #888; }
     </style>
 </head>
 <body>
@@ -64,114 +62,184 @@
         <h2>📋 รายการเมนูอาหารในร้าน</h2>
         
         <div class="search-container">
-            <a th:href="@{/menu/new}" class="btn btn-add" style="margin-bottom:0;">+ เพิ่มเมนูอาหารใหม่</a>
+            <!-- ปรับให้ส่งไปหน้าฟอร์มที่ฝั่ง Backend เพิ่ม Route ไว้ -->
+            <a href="/menu/new" class="btn btn-add">+ เพิ่มเมนูอาหารใหม่</a>
             
-            <form th:action="@{/menu}" method="get" class="search-box" id="searchForm">
-                <input type="text" name="keyword" class="search-input" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}">
-                <input type="hidden" name="sortField" th:value="${sortField}">
-                <input type="hidden" name="sortDir" th:value="${sortDir}">
-            </form>
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาชื่อเมนู...">
+            </div>
         </div>
         
-        <table th:if="${totalItems > 0}">
+        <table id="productTable">
             <thead>
                 <tr>
                     <th>
                         หมวดหมู่
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='categories.categoriesName', sortDir=${sortField == 'categories.categoriesName' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'categories.categoriesName'} ? 'active'">
-                            <span th:text="${sortField == 'categories.categoriesName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
+                        <button onclick="changeSort('categories.categoriesName')" id="sort-categories" class="sort-btn">↕</button>
                     </th>
                     <th>
                         ชื่อเมนู
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productName', sortDir=${sortField == 'productName' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productName'} ? 'active'">
-                            <span th:text="${sortField == 'productName' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
+                        <button onclick="changeSort('productName')" id="sort-productName" class="sort-btn">↕</button>
                     </th>
                     <th>รายละเอียด</th> 
                     <th>
                         ราคา
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productPrice', sortDir=${sortField == 'productPrice' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productPrice'} ? 'active'">
-                            <span th:text="${sortField == 'productPrice' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
+                        <button onclick="changeSort('productPrice')" id="sort-productPrice" class="sort-btn">↕</button>
                     </th>
                     <th>
                         สถานะ
-                        <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, sortField='productStatus', sortDir=${sortField == 'productStatus' ? reverseSortDir : 'asc'})}" 
-                           class="sort-btn" th:classappend="${sortField == 'productStatus'} ? 'active'">
-                            <span th:text="${sortField == 'productStatus' ? (sortDir == 'asc' ? '↑' : '↓') : '↕'}">↕</span>
-                        </a>
+                        <button onclick="changeSort('productStatus')" id="sort-productStatus" class="sort-btn">↕</button>
                     </th>
                     <th>จัดการ</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr th:each="p : ${products}">
-                    <td th:text="${p.categories != null ? p.categories.categoriesName : '-'}" style="font-size: 14px; color: #555;">หมวดหมู่</td>
-
-                    <td th:text="${p.productName}" style="text-align: left; font-weight: bold;">ชุดหมูรวมมิตร</td>
-                    
-                    <td th:text="${p.productDetail}" class="detail-col">รายละเอียดสินค้าจะแสดงที่นี่</td>
-                    
-                    <td th:text="${p.productPrice}">299</td>
-                    
-                    <td>
-                        <span th:text="${p.productStatus == 'available' ? 'พร้อมขาย' : 'หมด'}"
-                              th:style="${p.productStatus == 'available' ? 'color: green;' : 'color: red;'}">
-                        </span>
-                    </td>
-                    
-                    <td>
-                        <a th:href="@{/menu/edit/{id}(id=${p.productId})}" class="btn btn-edit">แก้ไข</a>
-                    </td>
-                </tr>
+            <tbody id="productBody">
+                <!-- Data will be loaded here via JavaScript -->
             </tbody>
         </table>
         
-        <div th:if="${totalItems == 0}" style="text-align: center; padding: 40px; color: #888; background: #f9f9f9; border-radius: 5px; margin-top: 20px;">
+        <div id="noDataMessage" style="display: none; text-align: center; padding: 40px; color: #888; background: #f9f9f9; border-radius: 5px; margin-top: 20px;">
             <p>ไม่พบรายการอาหารที่ค้นหา</p>
         </div>
-        
-        <div th:if="${totalPages > 1}">
-            <ul class="pagination">
-                <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">« ก่อนหน้า</a>
-                </li>
-                
-                <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
-                    th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/menu(page=${i}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}" th:text="${i}">1</a>
-                </li>
-                
-                <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}">ถัดไป »</a>
-                </li>
-            </ul>
+
+        <div id="paginationContainer">
+            <!-- Pagination will be loaded here -->
         </div>
         
-        <a th:href="@{/}" class="btn btn-home">กลับหน้าหลัก</a>
+        <a href="/" class="btn btn-home">กลับหน้าหลัก</a>
     </div>
 
     <script>
-        let timeout = null;
-        const searchInput = document.getElementById('searchInput');
-        if(searchInput) {
-            // Keep focus and put cursor at the end
-            const val = searchInput.value;
-            searchInput.focus();
-            searchInput.value = '';
-            searchInput.value = val;
+        let currentPage = 1;
+        let currentKeyword = '';
+        let currentSortField = 'productId';
+        let currentSortDir = 'asc';
+        let searchTimeout = null;
 
-            searchInput.addEventListener('input', function (e) {
-                clearTimeout(timeout);
-                timeout = setTimeout(function () {
-                    document.getElementById('searchForm').submit();
-                }, 200); // 200ms debounce
+        const API_BASE = '/api/menu';
+
+        // 1. ฟังก์ชันโหลดข้อมูลหลัก
+        async function fetchProducts() {
+            const tbody = document.getElementById('productBody');
+            const noData = document.getElementById('noDataMessage');
+            
+            try {
+                const url = `${API_BASE}?page=${currentPage}&keyword=${currentKeyword}&sortField=${currentSortField}&sortDir=${currentSortDir}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                renderTable(data.products);
+                renderPagination(data.totalPages, data.currentPage);
+                updateSortButtons();
+
+                noData.style.display = data.products.length === 0 ? 'block' : 'none';
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                tbody.innerHTML = '<tr><td colspan="6" style="color:red">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            }
+        }
+
+        // 2. ฟังก์ชันวาดตาราง
+        function renderTable(products) {
+            const tbody = document.getElementById('productBody');
+            tbody.innerHTML = '';
+
+            products.forEach(p => {
+                const row = document.createElement('tr');
+                const catName = p.categories ? p.categories.categoriesName : '-';
+                const statusText = p.productStatus === 'available' ? 'พร้อมขาย' : 'หมด';
+                const statusColor = p.productStatus === 'available' ? 'green' : 'red';
+
+                row.innerHTML = `
+                    <td style="font-size: 14px; color: #555;">${catName}</td>
+                    <td style="text-align: left; font-weight: bold;">${p.productName}</td>
+                    <td class="detail-col">${p.productDetail || ''}</td>
+                    <td>${p.productPrice}</td>
+                    <td><span style="color: ${statusColor}">${statusText}</span></td>
+                    <td>
+                        <a href="/menu/edit/${p.productId}" class="btn btn-edit">แก้ไข</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
             });
         }
+
+        // 3. ฟังก์ชันวาดเลขหน้า (Pagination)
+        function renderPagination(totalPages, activePage) {
+            const container = document.getElementById('paginationContainer');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<ul class="pagination">';
+            
+            // ปุ่มก่อนหน้า
+            html += `<li class="page-item ${activePage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" onclick="goToPage(${activePage - 1})">« ก่อนหน้า</a>
+                     </li>`;
+
+            // เลขหน้า
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<li class="page-item ${activePage === i ? 'active' : ''}">
+                            <a class="page-link" onclick="goToPage(${i})">${i}</a>
+                         </li>`;
+            }
+
+            // ปุ่มถัดไป
+            html += `<li class="page-item ${activePage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" onclick="goToPage(${activePage + 1})">ถัดไป »</a>
+                     </li>`;
+
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        // 4. ระบบค้นหา (Search Debounce)
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentKeyword = e.target.value;
+                currentPage = 1; // ค้นหาใหม่หน้าแรกเสมอ
+                fetchProducts();
+            }, 300);
+        });
+
+        // 5. ระบบจัดเรียง (Sort)
+        function changeSort(field) {
+            if (currentSortField === field) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDir = 'asc';
+            }
+            fetchProducts();
+        }
+
+        function updateSortButtons() {
+            // Reset all icons
+            const btns = document.querySelectorAll('.sort-btn');
+            btns.forEach(b => {
+                b.classList.remove('active');
+                b.innerText = '↕';
+            });
+
+            // Set active icon
+            const activeBtn = document.getElementById(`sort-${currentSortField.replace('.', '\\.')}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.innerText = currentSortDir === 'asc' ? '↑' : '↓';
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            fetchProducts();
+        }
+
+        // เริ่มโหลดข้อมูล
+        document.addEventListener('DOMContentLoaded', fetchProducts);
     </script>
 </body>
 </html>
