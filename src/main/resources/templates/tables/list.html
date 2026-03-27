@@ -1,118 +1,155 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>จัดการโต๊ะ - Mookata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tables - Mookata</title>
     <style>
-        body { font-family: 'Tahoma', sans-serif; padding: 30px; background-color: #f4f7f6; }
+        body { font-family: Tahoma, sans-serif; padding: 30px; background-color: #f4f7f6; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; margin-bottom: 25px; }
-        
-        .alert { padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        
-        .btn-add { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; margin-bottom: 25px; font-weight: bold; transition: background 0.3s; }
-        .btn-add:hover { background-color: #45a049; }
-
+        .btn-add { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; margin-bottom: 25px; font-weight: bold; }
         .table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        
-        .table-card { border: 2px solid #eee; padding: 20px; border-radius: 12px; text-align: center; background: #fff; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
-        .table-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        
+        .table-card { border: 2px solid #eee; padding: 20px; border-radius: 12px; text-align: center; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.06); }
         .table-card.available { border-color: #4CAF50; background-color: #f9fff9; }
-        .table-card.unavailable { border-color: #f44336; background-color: #fffafa; }
+        .table-card.unavailable, .table-card.occupied { border-color: #f44336; background-color: #fffafa; }
         .table-card.maintenance { border-color: #6c757d; background-color: #f8f9fa; opacity: 0.8; }
         .table-card.reserved { border-color: #ffc107; background-color: #fffdf5; }
-        
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin: 10px 0; font-weight: bold; }
-        .available .status-badge { background-color: #e8f5e9; color: #2e7d32; }
-        .unavailable .status-badge { background-color: #ffebee; color: #c62828; }
-        .maintenance .status-badge { background-color: #e9ecef; color: #495057; }
-        .reserved .status-badge { background-color: #fff3cd; color: #856404; }
-        
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin: 10px 0; font-weight: bold; background: #eef1f3; }
         .button-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        
-        .btn { display: block; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 14px; color: white; border: none; font-weight: 500; cursor: pointer; transition: opacity 0.2s; text-align: center; }
-        .btn:hover { opacity: 0.9; }
-        
+        .btn { display: block; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 14px; color: white; border: none; font-weight: 500; cursor: pointer; text-align: center; }
         .btn-order { background-color: #2196F3; }
         .btn-edit { background-color: #ff9800; }
         .btn-success { background-color: #4CAF50; }
         .btn-reset { background-color: #6c757d; }
         .btn-delete { background-color: #dc3545; font-size: 12px; padding: 5px; margin-top: 5px; }
-        
         .footer { text-align: center; margin-top: 40px; }
         .footer a { color: #666; text-decoration: none; font-size: 14px; }
-        .footer a:hover { text-decoration: underline; }
+        .loading, .empty { text-align: center; color: #666; padding: 24px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🍽️ โต๊ะในร้าน (Table Management)</h2>
-        
-        <!-- Flash Messages -->
-        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        
+        <h2>Table Management</h2>
+
+        <div id="successMessage" class="alert alert-success"></div>
+        <div id="errorMessage" class="alert alert-danger"></div>
+
         <div style="text-align: right;">
-            <a th:href="@{/tables/new}" class="btn-add">+ เพิ่มโต๊ะใหม่</a>
+            <a href="/tables/new" class="btn-add">+ Add Table</a>
         </div>
 
-        <div class="table-grid">
-            <div class="table-card" th:each="t : ${tables}" 
-                 th:classappend="${t.status}">
-                
-                <h3 th:text="'โต๊ะ ' + ${t.tableId}" style="margin: 0; color: #333;">โต๊ะ 1</h3>
-                
-                <span class="status-badge">
-                    <span th:if="${t.status == 'available'}">● ว่าง</span>
-                    <span th:if="${t.status == 'unavailable'}">● มีลูกค้า</span>
-                    <span th:if="${t.status == 'maintenance'}">🛠️ ซ่อมบำรุง</span>
-                    <span th:if="${t.status == 'reserved'}">📅 จองแล้ว</span>
-                    <span th:if="${t.status != 'available' && t.status != 'unavailable' && t.status != 'maintenance' && t.status != 'reserved'}" th:text="${t.status}"></span>
-                </span>
-                
-                <div class="button-group">
-                    <!-- Order button (Disabled if maintenance) -->
-                    <a th:if="${t.status != 'maintenance'}" th:href="@{/orders/{id}(id=${t.tableId})}" class="btn btn-order">
-                        🛒 สั่งอาหาร
-                    </a>
-                    <button th:if="${t.status == 'maintenance'}" class="btn btn-secondary" disabled>
-                        🚫 ไม่พร้อมบริการ
-                    </button>
-
-                    <a th:href="@{/tables/edit/{id}(id=${t.tableId})}" class="btn btn-edit">
-                        ⚙️ จัดการสถานะ
-                    </a>
-
-                    <!-- Show Payment and Reset only if occupied -->
-                    <th:block th:if="${t.status == 'unavailable' || t.status == 'reserved'}">
-                        <a th:href="@{/payments/checkout/table/{id}(id=${t.tableId})}" class="btn btn-success">
-                            💸 ชำระเงิน
-                        </a>
-
-                        <form th:action="@{/payments/reset/{id}(id=${t.tableId})}" method="post" style="margin: 0;">
-                            <button type="submit" class="btn btn-reset" style="width: 100%;"
-                                    onclick="return confirm('ยืนยันการคืนโต๊ะ? (ใช้สำหรับกรณีที่ไม่มีรายการอาหาร หรือต้องการรีเซ็ตสถานะ)')">
-                                🔄 คืนโต๊ะว่าง
-                            </button>
-                        </form>
-                    </th:block>
-
-                    <!-- Delete Table Button (Only if not occupied) -->
-                    <a th:if="${t.status != 'unavailable'}" th:href="@{/tables/delete/{id}(id=${t.tableId})}" 
-                       class="btn btn-delete" 
-                       onclick="return confirm('❗ ยืนยันการลบโต๊ะนี้? ข้อมูลทั้งหมดของโต๊ะนี้จะถูกลบออกถาวร')">
-                        🗑️ ลบโต๊ะ
-                    </a>
-                </div>
-            </div>
+        <div id="tableGrid" class="table-grid">
+            <div class="loading">Loading tables...</div>
         </div>
-        
+
         <div class="footer">
-            <a th:href="@{/}">🏠 กลับหน้าหลัก</a>
+            <a href="/">Back Home</a>
         </div>
     </div>
+
+    <script>
+        const tableGrid = document.getElementById('tableGrid');
+        const successBox = document.getElementById('successMessage');
+        const errorBox = document.getElementById('errorMessage');
+
+        function showMessage(type, text) {
+            const target = type === 'success' ? successBox : errorBox;
+            const other = type === 'success' ? errorBox : successBox;
+            other.style.display = 'none';
+            other.textContent = '';
+            target.textContent = text;
+            target.style.display = 'block';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function normalizeStatus(status) {
+            if (status === 'occupied') {
+                return 'unavailable';
+            }
+            return status || 'unknown';
+        }
+
+        function statusLabel(status) {
+            switch (normalizeStatus(status)) {
+                case 'available': return 'Available';
+                case 'unavailable': return 'Occupied';
+                case 'reserved': return 'Reserved';
+                case 'maintenance': return 'Maintenance';
+                default: return status || 'Unknown';
+            }
+        }
+
+        async function resetTable(tableId) {
+            if (!confirm('Reset this table to available?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/tables/${tableId}/reset`, { method: 'POST' });
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.message || 'Unable to reset table');
+                }
+                showMessage('success', payload.message);
+                await loadTables();
+            } catch (error) {
+                showMessage('error', error.message);
+            }
+        }
+
+        async function loadTables() {
+            tableGrid.innerHTML = '<div class="loading">Loading tables...</div>';
+
+            try {
+                const response = await fetch('/api/tables');
+                if (!response.ok) {
+                    throw new Error('Unable to load tables');
+                }
+
+                const tables = await response.json();
+                if (!tables.length) {
+                    tableGrid.innerHTML = '<div class="empty">No tables found.</div>';
+                    return;
+                }
+
+                tableGrid.innerHTML = tables.map((table) => {
+                    const status = normalizeStatus(table.status);
+                    const checkoutVisible = status === 'unavailable' || status === 'reserved';
+                    const deleteVisible = status !== 'unavailable' && status !== 'occupied';
+
+                    return `
+                        <div class="table-card ${escapeHtml(status)}">
+                            <h3 style="margin: 0; color: #333;">Table ${escapeHtml(table.tableId)}</h3>
+                            <span class="status-badge">${escapeHtml(statusLabel(table.status))}</span>
+                            <div class="button-group">
+                                <a href="/orders/${encodeURIComponent(table.tableId)}" class="btn btn-order">Order</a>
+                                <a href="/tables/edit/${encodeURIComponent(table.tableId)}" class="btn btn-edit">Edit Status</a>
+                                ${checkoutVisible ? `<a href="/payments/checkout/table/${encodeURIComponent(table.tableId)}" class="btn btn-success">Checkout</a>` : ''}
+                                ${checkoutVisible ? `<button type="button" class="btn btn-reset" onclick="resetTable(${Number(table.tableId)})">Reset Table</button>` : ''}
+                                ${deleteVisible ? `<a href="/tables/delete/${encodeURIComponent(table.tableId)}" class="btn btn-delete" onclick="return confirm('Delete this table?')">Delete</a>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                tableGrid.innerHTML = '<div class="empty">Failed to load tables.</div>';
+                showMessage('error', error.message);
+            }
+        }
+
+        loadTables();
+    </script>
 </body>
 </html>

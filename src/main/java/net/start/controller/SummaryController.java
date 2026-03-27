@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import net.start.model.Ordermenu;
 import net.start.model.OrderDetail;
+import net.start.model.Ordermenu;
 import net.start.model.Product;
 import net.start.service.OrdermenuService;
 import net.start.service.ProductService;
@@ -32,7 +32,6 @@ public class SummaryController {
         BigDecimal totalRevenue = ordermenuService.calculateTotalRevenue();
         List<Ordermenu> allPaidOrders = ordermenuService.getPaidOrderHistory();
         int totalOrders = allPaidOrders.size();
-        
         Map<Product, Integer> topProducts = ordermenuService.getTopSellingProducts();
         Map<Product, Integer> leastProducts = ordermenuService.getLeastSellingProducts();
 
@@ -40,8 +39,7 @@ public class SummaryController {
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("topProducts", topProducts);
         model.addAttribute("leastProducts", leastProducts);
-        
-        return "summary";
+        return "app";
     }
 
     @GetMapping("/product/{id}")
@@ -58,7 +56,6 @@ public class SummaryController {
         model.addAttribute("salesHistory", salesHistory);
         model.addAttribute("totalSold", totalSold);
         model.addAttribute("totalRevenue", totalRevenue);
-
-        return "summary/product_sales";
+        return "app";
     }
 }

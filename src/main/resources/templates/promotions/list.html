@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>จัดการโปรโมชั่น - Mookata</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promotions - Mookata</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
-    body { background-color: #f4f7f6; font-family: 'Kanit', sans-serif; padding: 30px; }
+    body { background-color: #f4f7f6; font-family: Tahoma, sans-serif; padding: 30px; }
     .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .promo-card { border-radius: 10px; border: 1px solid #eee; transition: transform 0.2s; height: 100%; }
     .promo-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -16,66 +17,66 @@
 <body>
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold"><i class="bi bi-tags"></i> จัดการโปรโมชั่น</h2>
+            <h2 class="fw-bold"><i class="bi bi-tags"></i> Promotions</h2>
             <div>
-                <a th:href="@{/}" class="btn btn-outline-secondary me-2">🏠 หน้าหลัก</a>
-                <a th:href="@{/promotion/new}" class="btn btn-success">+ เพิ่มโปรโมชั่นใหม่</a>
+                <a href="/" class="btn btn-outline-secondary me-2">Home</a>
+                <a href="/promotion/new" class="btn btn-success">+ Add Promotion</a>
             </div>
         </div>
-
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <span th:text="${successMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div id="promoGrid" class="row g-4">
+            <div class="col-12 text-center py-5 text-muted">Loading promotions...</div>
         </div>
+    </div>
+    <script>
+        const promoGrid = document.getElementById('promoGrid');
+        const escapeHtml = (value) => String(value ?? '')
+            .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <span th:text="${errorMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        function formatDate(value) {
+            if (!value) return '-';
+            return new Date(value).toLocaleDateString();
+        }
 
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4" th:each="promo : ${promotions}">
-                <div class="card promo-card shadow-sm p-3 position-relative">
-                    <span class="badge bg-primary badge-type" th:text="${promo.type}">Type</span>
-                    <h5 class="fw-bold text-dark mt-2" th:text="${promo.name}">Promotion Name</h5>
-                    <p class="text-muted small mb-3" th:text="${promo.detail}">Details...</p>
-                    
-                    <div class="border-top pt-3 mt-auto">
-                        <div class="small mb-2">
-                            <span class="fw-bold">เงื่อนไข:</span>
-                            <span th:if="${promo.minspend != null}" th:text="'ซื้อขั้นต่ำ ' + ${promo.minspend} + ' ฿'"></span>
-                            <span th:if="${promo.reqProduct != null}" th:text="'ซื้อ ' + ${promo.reqProduct.productName} + ' x' + ${promo.reqQuantity}"></span>
-                            <span th:if="${promo.minspend == null && promo.reqProduct == null}">ไม่มีเงื่อนไขพิเศษ</span>
-                        </div>
-                        <div class="small mb-3 text-success fw-bold">
-                            <i class="bi bi-gift"></i> สิทธิพิเศษ: 
-                            <span th:if="${promo.type == 'baht' && promo.value != null}" th:text="'ลดราคา ' + ${promo.value} + ' ฿'"></span>
-                            <span th:if="${promo.type == 'percent'}" th:text="'ลดราคา ' + (${promo.percent != null ? promo.percent : promo.value}) + ' %'"></span>
-                            <span th:if="${promo.freeProduct != null}" th:text="'แถมฟรี ' + ${promo.freeProduct.productName} + ' x' + ${promo.quantity}"></span>
-                        </div>
-                        
-                        <div class="small text-muted mb-3">
-                            <i class="bi bi-calendar3"></i> 
-                            <span th:text="${#dates.format(promo.startDate, 'dd/MM/yy')}"></span> - 
-                            <span th:text="${#dates.format(promo.endDate, 'dd/MM/yy')}"></span>
-                        </div>
+        async function loadPromotions() {
+            const response = await fetch('/api/promotions');
+            const promotions = await response.json();
 
-                        <div class="d-flex gap-2">
-                            <a th:href="@{/promotion/edit/{id}(id=${promo.promotionId})}" class="btn btn-sm btn-outline-warning w-100">⚙️ แก้ไข</a>
-                            <a th:href="@{/promotion/delete/{id}(id=${promo.promotionId})}" 
-                               class="btn btn-sm btn-outline-danger w-100"
-                               onclick="return confirm('ยืนยันการลบโปรโมชั่นนี้?')">🗑️ ลบ</a>
+            if (!promotions.length) {
+                promoGrid.innerHTML = '<div class="col-12 text-center py-5 text-muted">No promotions found.</div>';
+                return;
+            }
+
+            promoGrid.innerHTML = promotions.map((promo) => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card promo-card shadow-sm p-3 position-relative">
+                        <span class="badge bg-primary badge-type">${escapeHtml(promo.type)}</span>
+                        <h5 class="fw-bold text-dark mt-2">${escapeHtml(promo.name)}</h5>
+                        <p class="text-muted small mb-3">${escapeHtml(promo.detail || '')}</p>
+                        <div class="border-top pt-3 mt-auto">
+                            <div class="small mb-2">
+                                <span class="fw-bold">Condition:</span>
+                                ${promo.minspend != null ? `<span> Min ${escapeHtml(promo.minspend)} THB</span>` : ''}
+                                ${promo.reqProduct != null ? `<span> Buy ${escapeHtml(promo.reqProduct.productName)} x${escapeHtml(promo.reqQuantity)}</span>` : ''}
+                                ${promo.minspend == null && promo.reqProduct == null ? `<span>No special condition</span>` : ''}
+                            </div>
+                            <div class="small mb-3 text-success fw-bold">
+                                ${promo.type === 'baht' && promo.value != null ? `Discount ${escapeHtml(promo.value)} THB` : ''}
+                                ${promo.type === 'percent' ? `Discount ${escapeHtml(promo.percent ?? promo.value)}%` : ''}
+                                ${promo.freeProduct != null ? `Free ${escapeHtml(promo.freeProduct.productName)} x${escapeHtml(promo.quantity)}` : ''}
+                            </div>
+                            <div class="small text-muted mb-3">${formatDate(promo.startDate)} - ${formatDate(promo.endDate)}</div>
+                            <div class="d-flex gap-2">
+                                <a href="/promotion/edit/${encodeURIComponent(promo.promotionId)}" class="btn btn-sm btn-outline-warning w-100">Edit</a>
+                                <a href="/promotion/delete/${encodeURIComponent(promo.promotionId)}" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Delete this promotion?')">Delete</a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div th:if="${#lists.isEmpty(promotions)}" class="col-12 text-center py-5">
-                <h4 class="text-muted">ยังไม่มีโปรโมชั่นในระบบ</h4>
-            </div>
-        </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            `).join('');
+        }
+
+        loadPromotions();
+    </script>
 </body>
 </html>

@@ -8,6 +8,6 @@ public class HomeController {
 
     @GetMapping("/") // เข้าหน้าแรกด้วย URL: http://localhost:8080/
     public String index() {
-        return "index";
+        return "app";
     }
 }

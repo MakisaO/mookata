@@ -1,26 +1,37 @@
 package net.start.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.bind.WebDataBinder;
 import java.beans.PropertyEditorSupport;
 import java.sql.Timestamp;
 
-import net.start.model.Promotion;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 import net.start.model.Product;
-import net.start.service.PromotionService;
+import net.start.model.Promotion;
 import net.start.service.ProductService;
+import net.start.service.PromotionService;
 
 @Controller
 @RequestMapping("/promotion")
 public class PromotionController {
 
+    @Autowired
+    private PromotionService promotionService;
+
+    @Autowired
+    private ProductService productService;
+
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
-        // Date Editor
         binder.registerCustomEditor(Timestamp.class, new PropertyEditorSupport() {
             @Override
             public void setAsText(String text) {
@@ -41,14 +52,13 @@ public class PromotionController {
             @Override
             public String getAsText() {
                 Object value = getValue();
-                if (value instanceof Timestamp) {
-                    return ((Timestamp) value).toString().replace(" ", "T").substring(0, 16);
+                if (value instanceof Timestamp timestamp) {
+                    return timestamp.toString().replace(" ", "T").substring(0, 16);
                 }
                 return "";
             }
         });
 
-        // Product Editor for binding relationships from IDs
         binder.registerCustomEditor(Product.class, new PropertyEditorSupport() {
             @Override
             public void setAsText(String text) {
@@ -65,16 +75,10 @@ public class PromotionController {
         });
     }
 
-    @Autowired
-    private PromotionService promotionService;
-
-    @Autowired
-    private ProductService productService;
-
     @GetMapping("")
     public String listPromotions(Model model) {
         model.addAttribute("promotions", promotionService.findAll());
-        return "promotions/list";
+        return "app";
     }
 
     @GetMapping("/new")
@@ -83,30 +87,29 @@ public class PromotionController {
             model.addAttribute("promotion", new Promotion());
         }
         model.addAttribute("products", productService.findAll());
-        return "promotions/form";
+        return "app";
     }
 
     @PostMapping("/save")
     public String savePromotion(@ModelAttribute("promotion") Promotion promotion, RedirectAttributes redirectAttributes, Model model) {
         try {
             promotionService.save(promotion);
-            redirectAttributes.addFlashAttribute("successMessage", "บันทึกโปรโมชั่นเรียบร้อยแล้ว");
+            redirectAttributes.addFlashAttribute("successMessage", "Promotion saved");
             return "redirect:/promotion";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "เกิดข้อผิดพลาด: " + e.getMessage());
+            model.addAttribute("errorMessage", "Failed to save promotion: " + e.getMessage());
             model.addAttribute("products", productService.findAll());
-            return "promotions/form";
+            return "app";
         }
     }
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") int id, Model model) {
         if (!model.containsAttribute("promotion")) {
-            Promotion promotion = promotionService.findById(id);
-            model.addAttribute("promotion", promotion);
+            model.addAttribute("promotion", promotionService.findById(id));
         }
         model.addAttribute("products", productService.findAll());
-        return "promotions/form";
+        return "app";
     }
 
     @PostMapping("/update/{id}")
@@ -114,12 +117,12 @@ public class PromotionController {
         try {
             promotion.setPromotionId(id);
             promotionService.save(promotion);
-            redirectAttributes.addFlashAttribute("successMessage", "อัปเดตโปรโมชั่นเรียบร้อยแล้ว");
+            redirectAttributes.addFlashAttribute("successMessage", "Promotion updated");
             return "redirect:/promotion";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "เกิดข้อผิดพลาด: " + e.getMessage());
+            model.addAttribute("errorMessage", "Failed to update promotion: " + e.getMessage());
             model.addAttribute("products", productService.findAll());
-            return "promotions/form";
+            return "app";
         }
     }
 
@@ -127,9 +130,9 @@ public class PromotionController {
     public String deletePromotion(@PathVariable("id") int id, RedirectAttributes redirectAttributes) {
         try {
             promotionService.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "ลบโปรโมชั่นเรียบร้อยแล้ว");
+            redirectAttributes.addFlashAttribute("successMessage", "Promotion deleted");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "ไม่สามารถลบได้: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Unable to delete promotion: " + e.getMessage());
         }
         return "redirect:/promotion";
     }

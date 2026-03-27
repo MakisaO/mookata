@@ -1,117 +1,84 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ฟอร์มจัดการโต๊ะ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Form</title>
     <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f4f6f8;
-        }
-
-        .page {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .card {
-            width: min(420px, 100%);
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            padding: 24px;
-            box-sizing: border-box;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .actions {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            background: #28a745;
-            color: #fff;
-            cursor: pointer;
-            border-radius: 6px;
-            text-decoration: none;
-        }
-
-        .btn-cancel {
-            background: #dc3545;
-        }
-
-        .btn-back {
-            background: #6c757d;
-        }
+        body { margin: 0; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; font-family: Tahoma, sans-serif; background: #f4f6f8; }
+        .card { width: min(420px, 100%); background: #fff; border: 1px solid #ddd; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); padding: 24px; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        select, input { width: 100%; padding: 10px; box-sizing: border-box; }
+        .actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        .btn { padding: 10px 16px; border: none; background: #28a745; color: #fff; cursor: pointer; border-radius: 6px; text-decoration: none; }
+        .btn-cancel { background: #dc3545; }
+        .btn-back { background: #6c757d; }
     </style>
 </head>
 <body>
-    <div class="page">
-        <h1 th:text="${table.tableId == null ? 'เพิ่มโต๊ะใหม่' : 'แก้ไขสถานะโต๊ะ'}">ฟอร์มจัดการโต๊ะ</h1>
-
-        <div class="card">
-            <form th:action="${table.tableId == null ? '/tables/save' : '/tables/update/' + table.tableId}"
-                  th:object="${table}" method="post">
-
-                <div class="form-group" th:if="${table.tableId != null}">
-                    <label>รหัสโต๊ะ</label>
-                    <input type="text" th:field="*{tableId}" readonly style="background: #eee;">
-                </div>
-
-                <div class="form-group">
-                    <label>สถานะ</label>
-                    <select th:field="*{status}" required>
-                        <option value="">เลือกสถานะ</option>
-                        <option value="available">ว่าง</option>
-                        <option value="unavailable">กำลังใช้งาน</option>
-                        <option value="reserved">จองแล้ว</option>
-                        <option value="maintenance">ซ่อมบำรุง (ปิดใช้งาน)</option>
-                    </select>
-                </div>
-
-                <div class="actions">
-                    <button type="submit" class="btn">บันทึก</button>
-                    <a th:href="@{/tables}" class="btn btn-cancel">ยกเลิก</a>
-                    <a th:href="@{/}" class="btn btn-back">ย้อนกลับ</a>
-                </div>
-            </form>
-        </div>
+    <div class="card">
+        <h1 id="title">Table Form</h1>
+        <div id="message" style="margin-bottom:12px;color:#dc3545;"></div>
+        <form id="tableForm">
+            <div class="form-group" id="tableIdWrap" style="display:none;">
+                <label>Table ID</label>
+                <input type="text" id="tableId" readonly style="background: #eee;">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="status" required>
+                    <option value="">Select status</option>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Occupied</option>
+                    <option value="reserved">Reserved</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn">Save</button>
+                <a href="/tables" class="btn btn-cancel">Cancel</a>
+                <a href="/" class="btn btn-back">Back</a>
+            </div>
+        </form>
     </div>
+    <script>
+        const idMatch = location.pathname.match(/\/tables\/edit\/(\d+)/);
+        const tableId = idMatch ? idMatch[1] : null;
+        const title = document.getElementById('title');
+        const message = document.getElementById('message');
+        const tableIdWrap = document.getElementById('tableIdWrap');
+        const tableIdInput = document.getElementById('tableId');
+        const statusInput = document.getElementById('status');
+        const form = document.getElementById('tableForm');
+
+        title.textContent = tableId ? 'Edit Table' : 'Add Table';
+
+        async function loadTable() {
+            if (!tableId) return;
+            tableIdWrap.style.display = 'block';
+            const response = await fetch(`/api/tables/${tableId}`);
+            const data = await response.json();
+            tableIdInput.value = data.tableId;
+            statusInput.value = data.status || '';
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            message.textContent = '';
+            const response = await fetch(tableId ? `/api/tables/${tableId}` : '/api/tables', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: statusInput.value })
+            });
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({ message: 'Unable to save table' }));
+                message.textContent = payload.message || 'Unable to save table';
+                return;
+            }
+            location.href = '/tables';
+        });
+
+        loadTable();
+    </script>
 </body>
 </html>

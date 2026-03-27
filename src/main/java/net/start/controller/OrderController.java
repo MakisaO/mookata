@@ -29,104 +29,95 @@ import net.start.service.TablesService;
 @RequestMapping("/orders")
 public class OrderController {
 
-	@Autowired
-	private TablesService tablesService;
+    @Autowired
+    private TablesService tablesService;
 
-	@Autowired
-	private ProductService productService;
+    @Autowired
+    private ProductService productService;
 
-	@Autowired
-	private OrdermenuService ordermenuService;
+    @Autowired
+    private OrdermenuService ordermenuService;
 
-	@GetMapping("/new")
-	public String showOrderForm(Model model) {
-		List<Tables> tables = tablesService.findAll();
-		List<Product> products = productService.findAvailable();
+    @GetMapping("/new")
+    public String showOrderForm(Model model) {
+        List<Tables> tables = tablesService.findAll();
+        List<Product> products = productService.findAvailable();
+        model.addAttribute("tables", tables);
+        model.addAttribute("products", products);
+        return "app";
+    }
 
-		model.addAttribute("tables",tables);
-		model.addAttribute("products", products);
-		return "orders/form";
-	}
-	
-	@GetMapping("/history")
-	public String showOrderHistory(
-	        @RequestParam(value = "page", defaultValue = "0") int page,
-	        @RequestParam(value = "size", defaultValue = "10") int size,
-	        Model model) {
-	    
-	    Page<Ordermenu> orderPage = ordermenuService.getPaidOrderHistoryPaginated(PageRequest.of(page, size));
-	    BigDecimal grandTotal = ordermenuService.calculateTotalRevenue();
+    @GetMapping("/history")
+    public String showOrderHistory(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            Model model) {
 
-	    // สร้าง Map สำหรับเก็บข้อมูลที่ Group แล้วของทุก Order ในหน้านี้
-	    Map<Integer, Map<String, Integer>> summaryMap = orderPage.getContent().stream()
-	        .collect(Collectors.toMap(
-	            Ordermenu::getOrderId, 
-	            order -> ordermenuService.getGroupedDetails(order)
-	        ));
+        Page<Ordermenu> orderPage = ordermenuService.getPaidOrderHistoryPaginated(PageRequest.of(page, size));
+        BigDecimal grandTotal = ordermenuService.calculateTotalRevenue();
+        Map<Integer, Map<String, Integer>> summaryMap = orderPage.getContent().stream()
+                .collect(Collectors.toMap(Ordermenu::getOrderId, order -> ordermenuService.getGroupedDetails(order)));
 
-	    model.addAttribute("orders", orderPage.getContent());
-	    model.addAttribute("currentPage", page);
-	    model.addAttribute("totalPages", orderPage.getTotalPages());
-	    model.addAttribute("totalItems", orderPage.getTotalElements());
-	    model.addAttribute("pageSize", size);
-	    model.addAttribute("grandTotal", grandTotal);
-	    model.addAttribute("summaryMap", summaryMap);
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", orderPage.getTotalPages());
+        model.addAttribute("totalItems", orderPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("grandTotal", grandTotal);
+        model.addAttribute("summaryMap", summaryMap);
+        return "app";
+    }
 
-	    return "orders/history";
-	}
+    @GetMapping("/history/{id}")
+    public String showOrderDetail(@PathVariable("id") Integer id, Model model) {
+        Ordermenu order = ordermenuService.findById(id);
+        model.addAttribute("order", order);
+        model.addAttribute("groupedDetails", ordermenuService.getGroupedDetails(order));
+        return "app";
+    }
 
-	@GetMapping("/history/{id}")
-	public String showOrderDetail(@PathVariable("id") Integer id, Model model) {
-	    Ordermenu order = ordermenuService.findById(id);
-	    model.addAttribute("order", order);
-	    model.addAttribute("groupedDetails", ordermenuService.getGroupedDetails(order));
-	    return "orders/detail";
-	}
-	
-	@GetMapping("/{id}")
-	public String showOrderFormByTable(@PathVariable("id") Integer id, Model model) {
-	    model.addAttribute("selectedTableId", id);
-	    model.addAttribute("products", productService.findAvailable());
-	    
-	    model.addAttribute("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
-	    
-	    return "orders/form";
-	}
-	
+    @GetMapping("/{id}")
+    public String showOrderFormByTable(@PathVariable("id") Integer id, Model model) {
+        model.addAttribute("selectedTableId", id);
+        model.addAttribute("products", productService.findAvailable());
+        model.addAttribute("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
+        return "app";
+    }
 
-	@PostMapping("/save")
-	public String saveOrder(@RequestParam("tableId") Integer tableId,
-			@RequestParam Map<String, String> requestParams,
-			RedirectAttributes redirectAttributes) {
-		Map<Integer, Integer> quantities = new LinkedHashMap<>();
+    @PostMapping("/save")
+    public String saveOrder(
+            @RequestParam("tableId") Integer tableId,
+            @RequestParam Map<String, String> requestParams,
+            RedirectAttributes redirectAttributes) {
+        Map<Integer, Integer> quantities = new LinkedHashMap<>();
 
-		for (Map.Entry<String, String> entry : requestParams.entrySet()) {
-			String key = entry.getKey();
-			if (!key.startsWith("qty_")) {
-				continue;
-			}
+        for (Map.Entry<String, String> entry : requestParams.entrySet()) {
+            String key = entry.getKey();
+            if (!key.startsWith("qty_")) {
+                continue;
+            }
 
-			String value = entry.getValue();
-			if (value == null || value.isBlank()) {
-				continue;
-			}
+            String value = entry.getValue();
+            if (value == null || value.isBlank()) {
+                continue;
+            }
 
-			int quantity = Integer.parseInt(value);
-			if (quantity <= 0) {
-				continue;
-			}
+            int quantity = Integer.parseInt(value);
+            if (quantity <= 0) {
+                continue;
+            }
 
-			int productId = Integer.parseInt(key.substring(4));
-			quantities.put(productId, quantity);
-		}
+            int productId = Integer.parseInt(key.substring(4));
+            quantities.put(productId, quantity);
+        }
 
-		try {
-			ordermenuService.createOrder(tableId, quantities);
-			redirectAttributes.addFlashAttribute("successMessage", "บันทึกคำสั่งซื้อเรียบร้อยแล้ว");
-		} catch (IllegalArgumentException ex) {
-			redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-		}
+        try {
+            ordermenuService.createOrder(tableId, quantities);
+            redirectAttributes.addFlashAttribute("successMessage", "Order saved");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
 
-		return "redirect:/orders/" + tableId;
-	}
+        return "redirect:/orders/" + tableId;
+    }
 }
