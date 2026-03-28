@@ -46,4 +46,19 @@ public class HomeController {
     public String orderForm() {
         return "orders/form"; // ดึงไฟล์จาก src/main/resources/templates/orders/form.html
     }
+
+    @GetMapping("/tables")
+    public String tablesList() {
+        return "tables/list";
+    }
+
+    @GetMapping("/tables/new")
+    public String tablesNew() {
+        return "tables/form";
+    }
+
+    @GetMapping("/tables/edit/{id}")
+    public String tablesEdit() {
+        return "tables/form";
+    }
 }

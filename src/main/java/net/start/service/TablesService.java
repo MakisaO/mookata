@@ -3,7 +3,9 @@ package net.start.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import net.start.model.Tables;
 import net.start.repository.TablesRepository;
@@ -14,7 +16,6 @@ public class TablesService {
 	@Autowired
 	TablesRepository tablesRepository;
 
-	// Read: ดึงข้อมูลโต๊ะทั้งหมด
 	public List<Tables> findAll() {
 		return tablesRepository.findAll();
 	}
@@ -23,19 +24,16 @@ public class TablesService {
 		return tablesRepository.findByStatus(status);
 	}
 
-	// Read: ดึงข้อมูลโต๊ะตาม ID
 	public Tables findById(int id) {
-		return tablesRepository.findById(id).orElseThrow();
+		return tablesRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ไม่พบโต๊ะที่ต้องการ"));
 	}
 
-	// Create / Update: บันทึกข้อมูลโต๊ะ
 	public Tables save(Tables tables) {
 		return tablesRepository.save(tables);
 	}
 
-	// Delete: ลบโต๊ะ
 	public void deleteById(int id) {
 		tablesRepository.deleteById(id);
 	}
-
 }
