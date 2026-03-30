@@ -39,3 +39,4 @@ application-local.properties
 
 # Maven wrapper jar
 !.mvn/wrapper/maven-wrapper.jar
+/.metadata/

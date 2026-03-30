@@ -73,6 +73,16 @@ public class HomeController {
         return "promotions/form";
     }
 
+    @GetMapping("/summary")
+    public String summary() {
+        return "summary";
+    }
+
+    @GetMapping("/summary/product/{id}")
+    public String summaryProduct() {
+        return "summary/product_sales";
+    }
+
     @GetMapping("/promotions/edit/{id}")
     public String promotionEdit() {
         return "promotions/form";

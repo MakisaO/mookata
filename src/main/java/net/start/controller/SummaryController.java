@@ -1,15 +1,16 @@
 package net.start.controller;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import net.start.model.Ordermenu;
 import net.start.model.OrderDetail;
@@ -17,8 +18,8 @@ import net.start.model.Product;
 import net.start.service.OrdermenuService;
 import net.start.service.ProductService;
 
-@Controller
-@RequestMapping("/summary")
+@RestController
+@RequestMapping("/api/summary")
 public class SummaryController {
 
     @Autowired
@@ -28,24 +29,41 @@ public class SummaryController {
     private ProductService productService;
 
     @GetMapping("")
-    public String viewSummary(Model model) {
+    public ResponseEntity<Map<String, Object>> getSummary() {
         BigDecimal totalRevenue = ordermenuService.calculateTotalRevenue();
         List<Ordermenu> allPaidOrders = ordermenuService.getPaidOrderHistory();
         int totalOrders = allPaidOrders.size();
         
-        Map<Product, Integer> topProducts = ordermenuService.getTopSellingProducts();
-        Map<Product, Integer> leastProducts = ordermenuService.getLeastSellingProducts();
+        Map<Product, Integer> topProductsMap = ordermenuService.getTopSellingProducts();
+        Map<Product, Integer> leastProductsMap = ordermenuService.getLeastSellingProducts();
 
-        model.addAttribute("totalRevenue", totalRevenue);
-        model.addAttribute("totalOrders", totalOrders);
-        model.addAttribute("topProducts", topProducts);
-        model.addAttribute("leastProducts", leastProducts);
+        List<Map<String, Object>> topProducts = topProductsMap.entrySet().stream()
+            .map(entry -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("product", entry.getKey());
+                item.put("quantity", entry.getValue());
+                return item;
+            }).toList();
+
+        List<Map<String, Object>> leastProducts = leastProductsMap.entrySet().stream()
+            .map(entry -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("product", entry.getKey());
+                item.put("quantity", entry.getValue());
+                return item;
+            }).toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalRevenue", totalRevenue);
+        response.put("totalOrders", totalOrders);
+        response.put("topProducts", topProducts);
+        response.put("leastProducts", leastProducts);
         
-        return "summary";
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/product/{id}")
-    public String viewProductSales(@PathVariable("id") Integer id, Model model) {
+    public ResponseEntity<Map<String, Object>> getProductSales(@PathVariable("id") Integer id) {
         Product product = productService.findById(id);
         List<OrderDetail> salesHistory = ordermenuService.getProductSalesHistory(id);
 
@@ -54,11 +72,12 @@ public class SummaryController {
                 .map(d -> d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        model.addAttribute("product", product);
-        model.addAttribute("salesHistory", salesHistory);
-        model.addAttribute("totalSold", totalSold);
-        model.addAttribute("totalRevenue", totalRevenue);
+        Map<String, Object> response = new HashMap<>();
+        response.put("product", product);
+        response.put("salesHistory", salesHistory);
+        response.put("totalSold", totalSold);
+        response.put("totalRevenue", totalRevenue);
 
-        return "summary/product_sales";
+        return ResponseEntity.ok(response);
     }
 }

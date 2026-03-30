@@ -16,6 +16,27 @@ body {
 	padding: 30px;
 }
 
+/* Loading Overlay Styles */
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+}
+
+.spinner-grow {
+    width: 3rem;
+    height: 3rem;
+}
+
 .stat-card {
 	border: none;
 	border-radius: 15px;
@@ -51,10 +72,19 @@ body {
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner-grow text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="fw-bold text-primary">กำลังคำนวณยอดขาย...</h5>
+        <p class="text-muted small">กรุณารอสักครู่</p>
+    </div>
+
 	<div class="container">
 		<div class="d-flex justify-content-between align-items-center mb-5">
 			<h2 class="fw-bold"><i class="bi bi-bar-chart-line"></i> สรุปยอดขาย (Sales Summary)</h2>
-			<a th:href="@{/}" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
+			<a href="/" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
 		</div>
 
 		<div class="row g-4 mb-5">
@@ -65,8 +95,7 @@ body {
 						<i class="bi bi-currency-dollar"></i>
 					</div>
 					<h6 class="text-muted mb-1">รายได้รวมทั้งหมด</h6>
-					<h2 class="fw-bold mb-0 text-success" 
-                        th:text="${#numbers.formatDecimal(totalRevenue, 1, 2)} + ' ฿'">0.00 ฿</h2>
+					<h2 class="fw-bold mb-0 text-success" id="totalRevenue">0.00 ฿</h2>
 				</div>
 			</div>
 
@@ -77,7 +106,7 @@ body {
 						<i class="bi bi-receipt"></i>
 					</div>
 					<h6 class="text-muted mb-1">จำนวนออเดอร์ที่ชำระแล้ว</h6>
-					<h2 class="fw-bold mb-0 text-primary" th:text="${totalOrders}">0</h2>
+					<h2 class="fw-bold mb-0 text-primary" id="totalOrders">0</h2>
 				</div>
 			</div>
 		</div>
@@ -102,21 +131,8 @@ body {
 									<th class="text-center">ประวัติ</th>
 								</tr>
 							</thead>
-							<tbody>
-								<tr th:each="entry : ${topProducts}">
-									<td th:text="${entry.key.productName}" class="fw-bold">หมูสามชั้น</td>
-									<td class="text-center">
-										<span class="badge bg-warning text-dark fs-6" th:text="${entry.value}">10</span>
-									</td>
-                                    <td class="text-center">
-                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
-                                            📊 ดูประวัติ
-                                        </a>
-                                    </td>
-								</tr>
-								<tr th:if="${#maps.isEmpty(topProducts)}">
-									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
-								</tr>
+							<tbody id="topProductsTable">
+								<!-- Data will be loaded here -->
 							</tbody>
 						</table>
 					</div>
@@ -142,21 +158,8 @@ body {
 									<th class="text-center">ประวัติ</th>
 								</tr>
 							</thead>
-							<tbody>
-								<tr th:each="entry : ${leastProducts}">
-									<td th:text="${entry.key.productName}" class="fw-bold">ผักชี</td>
-									<td class="text-center">
-										<span class="badge bg-danger fs-6" th:text="${entry.value}">0</span>
-									</td>
-                                    <td class="text-center">
-                                        <a th:href="@{/summary/product/{id}(id=${entry.key.productId})}" class="btn btn-sm btn-outline-primary">
-                                            📊 ดูประวัติ
-                                        </a>
-                                    </td>
-								</tr>
-								<tr th:if="${#maps.isEmpty(leastProducts)}">
-									<td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td>
-								</tr>
+							<tbody id="leastProductsTable">
+								<!-- Data will be loaded here -->
 							</tbody>
 						</table>
 					</div>
@@ -165,5 +168,67 @@ body {
 		</div>
 	</div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchSummaryData();
+        });
+
+        async function fetchSummaryData() {
+            const loader = document.getElementById('loadingOverlay');
+            try {
+                const response = await fetch('/api/summary');
+                const data = await response.json();
+                
+                document.getElementById('totalRevenue').innerText = 
+                    (data.totalRevenue || 0).toLocaleString('th-TH', { minimumFractionDigits: 2 }) + ' ฿';
+                document.getElementById('totalOrders').innerText = data.totalOrders || 0;
+
+                renderProductsTable('topProductsTable', data.topProducts, 'bg-warning text-dark');
+                renderProductsTable('leastProductsTable', data.leastProducts, 'bg-danger');
+
+            } catch (error) {
+                console.error('Error fetching summary data:', error);
+                const loaderText = loader.querySelector('h5');
+                loaderText.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+                loaderText.classList.replace('text-primary', 'text-danger');
+            } finally {
+                // Hide loader with a slight delay for smooth transition
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }, 300);
+            }
+        }
+
+        function renderProductsTable(tableId, entries, badgeClass) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+
+            if (!entries || entries.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">ยังไม่มีข้อมูลยอดขาย</td></tr>';
+                return;
+            }
+
+            entries.forEach(entry => {
+                const product = entry.product;
+                const quantity = entry.quantity;
+                
+                const row = `
+                    <tr>
+                        <td class="fw-bold">${product.productName}</td>
+                        <td class="text-center">
+                            <span class="badge ${badgeClass} fs-6">${quantity}</span>
+                        </td>
+                        <td class="text-center">
+                            <a href="/summary/product/${product.productId}" class="btn btn-sm btn-outline-primary">
+                                📊 ดูประวัติ
+                            </a>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }
+    </script>
 </body>
 </html>

@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
 import net.start.model.Tables;
-import net.start.service.CategoriesService; // 🌟 1. นำเข้า CategoriesService
+import net.start.service.CategoriesService;
 import net.start.service.OrdermenuService;
 import net.start.service.ProductService;
 import net.start.service.TablesService;
@@ -31,14 +31,14 @@ import net.start.service.TablesService;
 @RequestMapping("/api/orders") // เปลี่ยน Path เป็น /api/orders
 public class OrderController {
 
-    @Autowired
-    private TablesService tablesService;
+	@Autowired
+	private TablesService tablesService;
 
-    @Autowired
-    private ProductService productService;
+	@Autowired
+	private ProductService productService;
 
-    @Autowired
-    private OrdermenuService ordermenuService;
+	@Autowired
+	private OrdermenuService ordermenuService;
 
 	@Autowired
 	private CategoriesService categoriesService; // 🌟 2. Inject CategoriesService
