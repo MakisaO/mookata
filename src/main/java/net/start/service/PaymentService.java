@@ -3,7 +3,10 @@ package net.start.service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,5 +67,39 @@ public class PaymentService {
 
         table.setStatus("available");
         tablesRepository.save(table);
+    }
+    /**
+     * Internal logic to calculate rewards for our own shop.
+     * Moved from PaymentController to keep the controller slim.
+     */
+    public Map<String, Object> calculateInternalDiscounts(BigDecimal originalTotal, List<net.start.model.Promotion> promos) {
+        BigDecimal discount = BigDecimal.ZERO;
+        List<String> messages = new ArrayList<>();
+
+        for (net.start.model.Promotion p : promos) {
+            if (p.getMinspend() != null && originalTotal.compareTo(p.getMinspend()) >= 0) {
+                if ("percent".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
+                    BigDecimal percentDiscount = originalTotal.multiply(p.getValue()).divide(new BigDecimal(100));
+                    discount = discount.add(percentDiscount);
+                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + "% (-" + percentDiscount + " ฿) [" + p.getName() + "]");
+                } else if ("baht".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
+                    discount = discount.add(p.getValue());
+                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + " บาท [" + p.getName() + "]");
+                } else if ("add".equalsIgnoreCase(p.getType()) && p.getFreeProduct() != null) {
+                    messages.add("🎁 แถมฟรี: " + p.getFreeProduct().getProductName() + " x" + p.getQuantity() + " [" + p.getName() + "]");
+                }
+            }
+        }
+
+        BigDecimal finalTotal = originalTotal.subtract(discount);
+        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
+            finalTotal = BigDecimal.ZERO;
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("discount", discount);
+        result.put("finalTotal", finalTotal);
+        result.put("messages", messages);
+        return result;
     }
 }

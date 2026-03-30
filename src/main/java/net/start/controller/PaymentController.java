@@ -24,6 +24,10 @@ import net.start.model.Promotion;
 import net.start.service.OrdermenuService;
 import net.start.service.PaymentService;
 import net.start.service.PromotionService;
+import net.start.service.PartnerCouponService;
+import java.util.Collections;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -40,6 +44,9 @@ public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
+
+    @Autowired
+    private PartnerCouponService partnerCouponService;
 
     @GetMapping("/checkout/table/{tableId}")
     public ResponseEntity<Map<String, Object>> showTableCheckout(@PathVariable("tableId") Integer tableId) {
@@ -60,31 +67,12 @@ public class PaymentController {
             originalTotal = originalTotal.add(summary.getTotalPrice() != null ? summary.getTotalPrice() : BigDecimal.ZERO);
         }
 
-        BigDecimal discount = BigDecimal.ZERO;
-        List<String> messages = new ArrayList<>();
-
         List<Promotion> promos = promotionService.findAll();
-        for (Promotion p : promos) {
-            // Basic validation: must be within date range (optional, but good practice)
-            
-            if (p.getMinspend() != null && originalTotal.compareTo(p.getMinspend()) >= 0) {
-                if ("percent".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
-                    BigDecimal percentDiscount = originalTotal.multiply(p.getValue()).divide(new BigDecimal(100));
-                    discount = discount.add(percentDiscount);
-                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + "% (-" + percentDiscount + " ฿) [" + p.getName() + "]");
-                } else if ("baht".equalsIgnoreCase(p.getType()) && p.getValue() != null) {
-                    discount = discount.add(p.getValue());
-                    messages.add("✅ ได้รับส่วนลด " + p.getValue() + " บาท [" + p.getName() + "]");
-                } else if ("add".equalsIgnoreCase(p.getType()) && p.getFreeProduct() != null) {
-                    messages.add("🎁 แถมฟรี: " + p.getFreeProduct().getProductName() + " x" + p.getQuantity() + " [" + p.getName() + "]");
-                }
-            }
-        }
-
-        BigDecimal finalTotal = originalTotal.subtract(discount);
-        if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
-            finalTotal = BigDecimal.ZERO;
-        }
+        Map<String, Object> internalReward = paymentService.calculateInternalDiscounts(originalTotal, promos);
+        
+        BigDecimal discount = (BigDecimal) internalReward.get("discount");
+        BigDecimal finalTotal = (BigDecimal) internalReward.get("finalTotal");
+        List<String> messages = (List<String>) internalReward.get("messages");
 
         response.put("status", "success");
         response.put("tableId", tableId);
@@ -94,6 +82,15 @@ public class PaymentController {
         response.put("finalTotal", finalTotal);
         response.put("promoMessages", messages);
         response.put("allPromotions", promos);
+
+        // Fetch Partner Promotions (Service handled)
+        try {
+            List<Map<String, Object>> partnerPromoData = partnerCouponService.getEligiblePartnerRewards(finalTotal.doubleValue());
+            response.put("partnerPromotions", partnerPromoData);
+        } catch (Exception e) {
+            logger.error("Error fetching partner promos", e);
+            response.put("partnerPromotions", new ArrayList<>());
+        }
 
         return ResponseEntity.ok(response);
     }
@@ -106,14 +103,21 @@ public class PaymentController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // Retrieve finalTotal from JSON body safely
             Object finalTotalObj = payload.get("finalTotal");
-            BigDecimal finalTotal = BigDecimal.ZERO;
-            if (finalTotalObj != null) {
-                finalTotal = new BigDecimal(finalTotalObj.toString());
-            }
+            BigDecimal finalTotal = (finalTotalObj != null) ? new BigDecimal(finalTotalObj.toString()) : BigDecimal.ZERO;
             
+            // 1. Process Internal Payment
             paymentService.processTablePayment(tableId, finalTotal);
+            
+            // 2. Process Partner Coupon (Service handled)
+            try {
+                PartnerCouponService.CouponData coupon = partnerCouponService.issueRandomQualifiedCoupon(finalTotal.doubleValue());
+                if (coupon != null) {
+                    response.put("partnerCoupon", coupon);
+                }
+            } catch (Exception e) {
+                logger.error("Error issuing partner coupon", e);
+            }
             
             response.put("status", "success");
             response.put("message", "ชำระเงินโต๊ะ " + tableId + " เรียบร้อยแล้ว");
