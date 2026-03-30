@@ -2,17 +2,21 @@ package net.start.controller;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RestController;
 
 import net.start.dto.OrderItemSummary;
 import net.start.model.Ordermenu;
@@ -21,9 +25,12 @@ import net.start.service.OrdermenuService;
 import net.start.service.PaymentService;
 import net.start.service.PromotionService;
 
-@Controller
-@RequestMapping("/payments")
+@RestController
+@RequestMapping("/api/payments")
+@CrossOrigin(origins = "*")
 public class PaymentController {
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentController.class);
 
     @Autowired
     private OrdermenuService ordermenuService;
@@ -35,12 +42,15 @@ public class PaymentController {
     private PaymentService paymentService;
 
     @GetMapping("/checkout/table/{tableId}")
-    public String showTableCheckout(@PathVariable("tableId") Integer tableId, Model model, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, Object>> showTableCheckout(@PathVariable("tableId") Integer tableId) {
         List<Ordermenu> activeOrders = ordermenuService.getActiveOrdersByTable(tableId);
         
+        Map<String, Object> response = new HashMap<>();
+
         if (activeOrders.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "โต๊ะนี้ยังไม่มีรายการอาหาร");
-            return "redirect:/tables";
+            response.put("status", "error");
+            response.put("message", "โต๊ะนี้ยังไม่มีรายการอาหาร");
+            return ResponseEntity.badRequest().body(response);
         }
         
         List<OrderItemSummary> aggregatedOrders = ordermenuService.getAggregatedActiveOrders(tableId);
@@ -76,41 +86,60 @@ public class PaymentController {
             finalTotal = BigDecimal.ZERO;
         }
 
-        model.addAttribute("tableId", tableId);
-        model.addAttribute("aggregatedOrders", aggregatedOrders);
-        model.addAttribute("originalTotal", originalTotal);
-        model.addAttribute("discount", discount);
-        model.addAttribute("finalTotal", finalTotal);
-        model.addAttribute("promoMessages", messages);
-        model.addAttribute("allPromotions", promos);
+        response.put("status", "success");
+        response.put("tableId", tableId);
+        response.put("aggregatedOrders", aggregatedOrders);
+        response.put("originalTotal", originalTotal);
+        response.put("discount", discount);
+        response.put("finalTotal", finalTotal);
+        response.put("promoMessages", messages);
+        response.put("allPromotions", promos);
 
-        return "payments/checkout";
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/save/table/{tableId}")
-    public String processTablePayment(@PathVariable("tableId") Integer tableId,
-            @RequestParam("finalTotal") BigDecimal finalTotal, 
-            RedirectAttributes redirectAttributes) {
-
+    public ResponseEntity<Map<String, Object>> processTablePayment(
+            @PathVariable("tableId") Integer tableId,
+            @RequestBody Map<String, Object> payload) {
+            
+        Map<String, Object> response = new HashMap<>();
+        
         try {
+            // Retrieve finalTotal from JSON body safely
+            Object finalTotalObj = payload.get("finalTotal");
+            BigDecimal finalTotal = BigDecimal.ZERO;
+            if (finalTotalObj != null) {
+                finalTotal = new BigDecimal(finalTotalObj.toString());
+            }
+            
             paymentService.processTablePayment(tableId, finalTotal);
-            redirectAttributes.addFlashAttribute("successMessage", "ชำระเงินโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+            
+            response.put("status", "success");
+            response.put("message", "ชำระเงินโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+            return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "เกิดข้อผิดพลาดในการชำระเงิน: " + e.getMessage());
-            return "redirect:/payments/checkout/table/" + tableId;
+            logger.error("Payment process error", e);
+            response.put("status", "error");
+            response.put("message", "เกิดข้อผิดพลาดในการชำระเงิน: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-
-        return "redirect:/tables";
     }
 
     @PostMapping("/reset/{tableId}")
-    public String resetTable(@PathVariable("tableId") Integer tableId, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, Object>> resetTable(@PathVariable("tableId") Integer tableId) {
+        Map<String, Object> response = new HashMap<>();
         try {
             paymentService.resetTableStatus(tableId);
-            redirectAttributes.addFlashAttribute("successMessage", "คืนโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+            response.put("status", "success");
+            response.put("message", "คืนโต๊ะ " + tableId + " เรียบร้อยแล้ว");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "เกิดข้อผิดพลาด: " + e.getMessage());
+            logger.error("Reset table error", e);
+            response.put("status", "error");
+            response.put("message", "เกิดข้อผิดพลาด: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        return "redirect:/tables";
     }
 }
