@@ -118,8 +118,32 @@ public class OrderController {
 			return ResponseEntity.notFound().build();
 		}
 
+		Map<String, Object> orderResponse = new HashMap<>();
+		orderResponse.put("orderId", order.getOrderId());
+		orderResponse.put("orderDate", order.getOrderDate());
+		orderResponse.put("orderStatus", order.getOrderStatus());
+		orderResponse.put("totalAmount", order.getTotalAmount());
+
+		Map<String, Object> tableInfo = new HashMap<>();
+		tableInfo.put("tableId", order.getTables() != null ? order.getTables().getTableId() : null);
+		orderResponse.put("tables", tableInfo);
+
+		List<Map<String, Object>> orderDetails = order.getOrderDetails().stream()
+				.map(detail -> {
+					Map<String, Object> detailInfo = new HashMap<>();
+					detailInfo.put("quantity", detail.getQuantity());
+					detailInfo.put("unitPrice", detail.getUnitPrice());
+
+					Map<String, Object> productInfo = new HashMap<>();
+					productInfo.put("productName", detail.getProduct() != null ? detail.getProduct().getProductName() : null);
+					detailInfo.put("product", productInfo);
+					return detailInfo;
+				})
+				.toList();
+		orderResponse.put("orderDetails", orderDetails);
+
 		Map<String, Object> response = new HashMap<>();
-		response.put("order", order);
+		response.put("order", orderResponse);
 		response.put("groupedDetails", ordermenuService.getGroupedDetails(order));
 
 		return ResponseEntity.ok(response);
