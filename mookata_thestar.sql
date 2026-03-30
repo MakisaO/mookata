@@ -218,6 +218,14 @@ CREATE TABLE `tables` (
   `status` enum('available','occupied','reserved') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE IF NOT EXISTS `coupon` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `promotion_id` INT NOT NULL,
+  `code` VARCHAR(255) NOT NULL,
+  `status` ENUM('ACTIVE', 'USED', 'EXPIRED', 'CANCELED') DEFAULT 'ACTIVE',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -225,6 +233,7 @@ CREATE TABLE `tables` (
 --
 -- Indexes for table `categories`
 --
+
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`categoriesID`);
 
@@ -359,6 +368,11 @@ ALTER TABLE `product`
 ALTER TABLE `promotion`
   ADD CONSTRAINT `promotion_ibfk_1` FOREIGN KEY (`free_product_id`) REFERENCES `product` (`product_id`),
   ADD CONSTRAINT `promotion_ibfk_2` FOREIGN KEY (`req_product_id`) REFERENCES `product` (`product_id`);
+
+
+ALTER TABLE `coupon`
+  ADD CONSTRAINT `coupon_ibfk_1` FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`);
+
 
 --
 -- Constraints for table `promotionusage`
