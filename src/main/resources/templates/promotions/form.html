@@ -108,8 +108,10 @@
 
     <script>
         const pathParts = window.location.pathname.split('/');
+        console.log('Path parts:', pathParts);
         const isEdit = pathParts.includes('edit');
         const promotionId = isEdit ? pathParts[pathParts.length - 1] : null;
+        console.log('Is Edit:', isEdit, 'Promotion ID:', promotionId);
 
         const pageTitle = document.getElementById('pageTitle');
         const messageBox = document.getElementById('messageBox');
@@ -137,10 +139,13 @@
         }
 
         async function loadProducts() {
-            const response = await fetch('/api/products');
+            // Using /api/menu with a large size to get all products for the dropdown
+            const response = await fetch('/api/menu?page=1&size=1000');
             if (!response.ok) throw new Error('โหลดสินค้าไม่สำเร็จ');
 
-            const products = await response.json();
+            const data = await response.json();
+            const products = data.products || [];
+            
             const options = [
                 '<option value="">-- ไม่มีการแถมสินค้า --</option>',
                 ...products.map(p => `<option value="${p.productId}">${p.productName}</option>`)
