@@ -1,6 +1,8 @@
 package net.start.model;
 
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,10 +22,12 @@ public class OrderDetail implements java.io.Serializable {
 	@Column(name = "detail_id")
 	private Integer detailId;
 
+	@JsonBackReference(value="order-details")
 	@ManyToOne
 	@JoinColumn(name = "order_id")
 	private Ordermenu ordermenu;
 
+	@JsonBackReference(value="product-details")
 	@ManyToOne
 	@JoinColumn(name = "product_id")
 	private Product product;

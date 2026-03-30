@@ -11,7 +11,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -136,10 +139,8 @@ public class OrdermenuService {
     }
 
     public BigDecimal calculateTotalRevenue() {
-        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
-        return allPaid.stream()
-                .map(Ordermenu::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = ordermenuRepository.getTotalRevenue();
+        return total != null ? total : BigDecimal.ZERO;
     }
     
     public Map<String, Integer> getGroupedDetails(Ordermenu order) {
@@ -151,56 +152,24 @@ public class OrdermenuService {
     }
 
     public Map<Product, Integer> getTopSellingProducts() {
-        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
-        return allPaid.stream()
-                .flatMap(order -> order.getOrderDetails().stream())
-                .collect(Collectors.groupingBy(
-                    OrderDetail::getProduct,
-                    Collectors.summingInt(OrderDetail::getQuantity)
-                )).entrySet().stream()
-                .sorted(Map.Entry.<Product, Integer>comparingByValue().reversed())
-                .limit(5)
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (e1, e2) -> e1,
-                    LinkedHashMap::new
-                ));
+        List<Object[]> results = orderDetailRepository.findTopSellingProducts(PageRequest.of(0, 5));
+        Map<Product, Integer> topProducts = new LinkedHashMap<>();
+        for (Object[] result : results) {
+            topProducts.put((Product) result[0], ((Long) result[1]).intValue());
+        }
+        return topProducts;
     }
 
     public Map<Product, Integer> getLeastSellingProducts() {
-        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
-        
-        // 1. Get counts of everything that has been sold
-        Map<Product, Integer> soldProducts = allPaid.stream()
-                .flatMap(order -> order.getOrderDetails().stream())
-                .collect(Collectors.groupingBy(
-                    OrderDetail::getProduct,
-                    Collectors.summingInt(OrderDetail::getQuantity)
-                ));
-
-        // 2. Get all available products to find ones with 0 sales
-        List<Product> allProducts = productRepository.findAll();
-        for (Product p : allProducts) {
-            soldProducts.putIfAbsent(p, 0);
+        List<Object[]> results = orderDetailRepository.findLeastSellingProducts(PageRequest.of(0, 5));
+        Map<Product, Integer> leastProducts = new LinkedHashMap<>();
+        for (Object[] result : results) {
+            leastProducts.put((Product) result[0], ((Long) result[1]).intValue());
         }
-
-        return soldProducts.entrySet().stream()
-                .sorted(Map.Entry.<Product, Integer>comparingByValue())
-                .limit(5)
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (e1, e2) -> e1,
-                    LinkedHashMap::new
-                ));
+        return leastProducts;
     }
 
     public List<OrderDetail> getProductSalesHistory(Integer productId) {
-        List<Ordermenu> allPaid = ordermenuRepository.findByOrderStatusOrderByOrderDateDesc("paid");
-        return allPaid.stream()
-                .flatMap(order -> order.getOrderDetails().stream())
-                .filter(detail -> detail.getProduct().getProductId().equals(productId))
-                .collect(Collectors.toList());
+        return orderDetailRepository.findSalesHistoryByProduct(productId);
     }
 }
