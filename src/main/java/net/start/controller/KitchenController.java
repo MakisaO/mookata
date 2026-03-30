@@ -64,8 +64,29 @@ public class KitchenController {
 
             // จัด โครงสร้างใหม่ให้อ่านง่ายเมื่อแปลงเป็น JSON
             Map<String, Object> roundInfo = new HashMap<>();
-            roundInfo.put("orderMenu", ordermenu);
-            roundInfo.put("items", items);
+
+            Map<String, Object> orderMenuInfo = new HashMap<>();
+            orderMenuInfo.put("orderId", ordermenu.getOrderId());
+            orderMenuInfo.put("orderDate", ordermenu.getOrderDate());
+
+            Map<String, Object> tableInfo = new HashMap<>();
+            tableInfo.put("tableId", ordermenu.getTables() != null ? ordermenu.getTables().getTableId() : null);
+            orderMenuInfo.put("tables", tableInfo);
+
+            List<Map<String, Object>> itemInfos = items.stream().map(item -> {
+                Map<String, Object> itemInfo = new HashMap<>();
+                itemInfo.put("detailId", item.getDetailId());
+                itemInfo.put("quantity", item.getQuantity());
+                itemInfo.put("itemStatus", item.getItemStatus());
+
+                Map<String, Object> productInfo = new HashMap<>();
+                productInfo.put("productName", item.getProduct() != null ? item.getProduct().getProductName() : null);
+                itemInfo.put("product", productInfo);
+                return itemInfo;
+            }).toList();
+
+            roundInfo.put("orderMenu", orderMenuInfo);
+            roundInfo.put("items", itemInfos);
             roundInfo.put("massActionLabel", massActionLabel);
             
             roundsData.add(roundInfo);
