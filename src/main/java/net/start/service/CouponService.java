@@ -69,17 +69,21 @@ public class CouponService {
         return Optional.empty();
     }
 
-    // 5. เปลี่ยนสถานะคูปองเป็น USED (หลังจากใช้งานแล้ว)
-    public boolean useCoupon(String code) {
+    // 5. เปลี่ยนสถานะคูปอง (ตัวอย่าง: เปลี่ยนเป็น USED)
+    public boolean updateCouponStatus(String code, String newStatus) {
         Optional<Coupon> couponOpt = couponRepository.findByCode(code);
-        
-        if (couponOpt.isPresent() && "ACTIVE".equalsIgnoreCase(couponOpt.get().getStatus())) {
+        if (couponOpt.isPresent()) {
             Coupon coupon = couponOpt.get();
-            coupon.setStatus("USED");
+            coupon.setStatus(newStatus.toUpperCase());
             couponRepository.save(coupon);
             return true;
         }
         return false;
+    }
+
+    // 5.1 เปลี่ยนเป็น USED (ตัวอย่าง)
+    public boolean useCoupon(String code) {
+        return updateCouponStatus(code, "USED");
     }
 
     // 6. ยกเลิกคูปอง (Soft Delete)

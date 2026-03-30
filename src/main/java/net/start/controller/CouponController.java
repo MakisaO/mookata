@@ -57,14 +57,20 @@ public class CouponController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 5. ใช้งานคูปอง (POST /api/coupons/use/TSM-123456)
+    // 5. ใช้งานคูปอง (เปลี่ยนสถานะเป็นอะไรก็ได้ตามสั่ง)
     @PostMapping("/use/{code}")
     public ResponseEntity<String> useCoupon(@PathVariable String code) {
-        boolean success = couponService.useCoupon(code);
-        if (success) {
-            return ResponseEntity.ok("Coupon used successfully");
-        }
-        return ResponseEntity.badRequest().body("Invalid coupon code or already used");
+        boolean success = couponService.updateCouponStatus(code, "USED");
+        if (success) return ResponseEntity.ok("Coupon used successfully");
+        return ResponseEntity.badRequest().body("Invalid coupon code");
+    }
+
+    // 5.1 อัปเดตสถานะตรงๆ (PATCH /api/coupons/status/TSM-123/USED)
+    @PostMapping("/status/{code}/{status}")
+    public ResponseEntity<String> updateStatus(@PathVariable String code, @PathVariable String status) {
+        boolean success = couponService.updateCouponStatus(code, status);
+        if (success) return ResponseEntity.ok("Status updated: " + status);
+        return ResponseEntity.badRequest().body("Failed to update status");
     }
 
     // 6. ยกเลิกคูปอง (DELETE /api/coupons/12)
