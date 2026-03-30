@@ -159,24 +159,43 @@
 
         async function loadPromotion() {
             if (!promotionId) return;
+            console.log('Fetching promotion data for ID:', promotionId);
 
-            const response = await fetch(`/api/promotions/${promotionId}`);
-            if (!response.ok) throw new Error('โหลดข้อมูลโปรโมชั่นไม่สำเร็จ');
+            try {
+                const response = await fetch(`/api/promotions/${promotionId}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Fetch error:', response.status, errorText);
+                    throw new Error('โหลดข้อมูลโปรโมชั่นไม่สำเร็จ');
+                }
 
-            const promo = await response.json();
+                const promo = await response.json();
+                console.log('Promotion data received:', promo);
 
-            document.getElementById('promotionId').value = promo.promotionId ?? '';
-            document.getElementById('name').value = promo.name ?? '';
-            document.getElementById('detail').value = promo.detail ?? '';
-            document.getElementById('type').value = promo.type ?? '';
-            document.getElementById('startDate').value = toLocalDateTime(promo.startDate);
-            document.getElementById('endDate').value = toLocalDateTime(promo.endDate);
-            document.getElementById('value').value = promo.value ?? '';
-            document.getElementById('quantity').value = promo.quantity ?? '';
-            document.getElementById('minspend').value = promo.minspend ?? '';
-            document.getElementById('reqQuantity').value = promo.reqQuantity ?? '';
-            document.getElementById('freeProduct').value = promo.freeProduct ? promo.freeProduct.productId : '';
-            document.getElementById('reqProduct').value = promo.reqProduct ? promo.reqProduct.productId : '';
+                document.getElementById('promotionId').value = promo.promotionId ?? '';
+                document.getElementById('name').value = promo.name ?? '';
+                document.getElementById('detail').value = promo.detail ?? '';
+                document.getElementById('type').value = promo.type ?? '';
+                
+                if (promo.startDate) {
+                    document.getElementById('startDate').value = toLocalDateTime(promo.startDate);
+                }
+                if (promo.endDate) {
+                    document.getElementById('endDate').value = toLocalDateTime(promo.endDate);
+                }
+                
+                document.getElementById('value').value = promo.value ?? '';
+                document.getElementById('quantity').value = promo.quantity ?? '';
+                document.getElementById('minspend').value = promo.minspend ?? '';
+                document.getElementById('reqQuantity').value = promo.reqQuantity ?? '';
+                document.getElementById('freeProduct').value = promo.freeProduct ? promo.freeProduct.productId : '';
+                document.getElementById('reqProduct').value = promo.reqProduct ? promo.reqProduct.productId : '';
+                
+                console.log('Form fields populated');
+            } catch (err) {
+                console.error('Error in loadPromotion:', err);
+                throw err;
+            }
         }
 
         function buildBody() {
