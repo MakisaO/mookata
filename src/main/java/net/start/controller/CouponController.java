@@ -48,10 +48,11 @@ public class CouponController {
         }
     }
 
-    // 4. ตรวจสอบรหัสคูปองว่าใช้ได้ไหม (GET /api/coupons/validate/TSM-123456)
+    // 4. ตรวจสอบสถานะคูปอง (ใช้สำหรับหน้าจอ Check Status)
     @GetMapping("/validate/{code}")
     public ResponseEntity<Coupon> validateCoupon(@PathVariable String code) {
-        return couponService.validateCoupon(code)
+        // ดึงคูปองมาดูทุกสถานะ (แม้จะเป็น USED หรือ CANCELED)
+        return couponService.getCouponByCode(code)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
