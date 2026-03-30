@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.start.model.Ordermenu;
 import net.start.model.Product;
 import net.start.model.Tables;
+import net.start.service.CategoriesService; // 🌟 1. นำเข้า CategoriesService
 import net.start.service.OrdermenuService;
 import net.start.service.ProductService;
 import net.start.service.TablesService;
@@ -30,14 +31,17 @@ import net.start.service.TablesService;
 @RequestMapping("/api/orders") // เปลี่ยน Path เป็น /api/orders
 public class OrderController {
 
-	@Autowired
-	private TablesService tablesService;
+    @Autowired
+    private TablesService tablesService;
+
+    @Autowired
+    private ProductService productService;
+
+    @Autowired
+    private OrdermenuService ordermenuService;
 
 	@Autowired
-	private ProductService productService;
-
-	@Autowired
-	private OrdermenuService ordermenuService;
+	private CategoriesService categoriesService; // 🌟 2. Inject CategoriesService
 
 	// สร้าง DTO ภายใน (Inner Class) สำหรับรับค่าตอนบันทึกคำสั่งซื้อเป็น JSON
 	public static class OrderRequest {
@@ -63,13 +67,18 @@ public class OrderController {
 
 	// 1. ดึงข้อมูลสำหรับหน้าฟอร์มสร้างออเดอร์ (โต๊ะทั้งหมด + สินค้าทั้งหมด)
 	@GetMapping("/new")
-	public ResponseEntity<Map<String, Object>> showOrderForm() {
+	public ResponseEntity<Map<String, Object>> showOrderForm(
+			@RequestParam(value = "categoryId", required = false) Integer categoryId) {
 		List<Tables> tables = tablesService.findAll();
-		List<Product> products = productService.findAvailable();
+		
+        // 🌟 ดึงสินค้าเฉพาะที่ "พร้อมขาย" และ "ตรงกับหมวดหมู่ที่เลือก" (ถ้าไม่ได้เลือก ดึงทั้งหมด)
+		List<Product> products = productService.findAvailableByCategoryId(categoryId);
 
 		Map<String, Object> response = new HashMap<>();
 		response.put("tables", tables);
 		response.put("products", products);
+        response.put("categories", categoriesService.findAll());
+        response.put("activeCategoryId", categoryId);
 
 		return ResponseEntity.ok(response);
 	}
@@ -118,11 +127,19 @@ public class OrderController {
 
 	// 4. ดึงข้อมูลประวัติและสินค้าของโต๊ะที่จะสั่งอาหาร
 	@GetMapping("/{id}")
-	public ResponseEntity<Map<String, Object>> showOrderFormByTable(@PathVariable("id") Integer id) {
+	public ResponseEntity<Map<String, Object>> showOrderFormByTable(
+			@PathVariable("id") Integer id,
+			@RequestParam(value = "categoryId", required = false) Integer categoryId) {
 		Map<String, Object> response = new HashMap<>();
 		response.put("selectedTableId", id);
-		response.put("products", productService.findAvailable());
+		
+        // 🌟 ดึงสินค้าเฉพาะที่ "พร้อมขาย" และ "ตรงกับหมวดหมู่ที่เลือก"
+		response.put("products", productService.findAvailableByCategoryId(categoryId));
 		response.put("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
+        
+        // 🌟 ส่งข้อมูลหมวดหมู่เพื่อไปสร้างปุ่มผ่าน UI แบบ JSON
+        response.put("categories", categoriesService.findAll());
+        response.put("activeCategoryId", categoryId);
 
 		return ResponseEntity.ok(response);
 	}

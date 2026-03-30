@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
@@ -31,12 +31,13 @@
     <div class="container py-5" style="max-width: 1200px;">
         <div class="card checkout-card">
             <div class="card-header header-bg p-4">
-                <h3 class="mb-0 text-center">🧾 ชำระเงิน ค่าอาหารโต๊ะ [[${tableId}]]</h3>
+                <h3 class="mb-0 text-center">🧾 ชำระเงิน ค่าอาหารโต๊ะ <span th:text="${tableId}"></span></h3>
             </div>
             <div class="card-body p-4">
-                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+                
+                <div id="alert-container"></div>
 
-                <div class="row g-4">
+                <div class="row g-4" id="checkout-content">
                     <!-- Left Column: Order Items -->
                     <div class="col-lg-8">
                         <h5 class="mb-3">รายการอาหารทั้งหมด</h5>
@@ -50,14 +51,11 @@
                                         <th class="text-end">ราคารวม</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- Loop through all aggregated active orders of the table -->
-                                    <tr th:each="summary : ${aggregatedOrders}">
-                                        <td th:text="${summary.product.productName}">หมูสไลด์</td>
-                                        <td th:text="${summary.quantity}">1</td>
-                                        <td th:text="${summary.unitPrice} + ' ฿'">299 ฿</td>
-                                        <td class="text-end fw-bold text-primary"
-                                            th:text="${summary.totalPrice} + ' ฿'">299 ฿</td>
+                                <tbody id="order-items-container">
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-muted">
+                                            <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div> กำลังโหลดข้อมูล...
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -72,38 +70,29 @@
                             <div class="row mb-3">
                                 <div class="col-6"><span class="text-muted">ยอดรวม:</span></div>
                                 <div class="col-6 text-end">
-                                    <span class="fw-bold" th:text="${originalTotal} + ' บาท'">0.00 บาท</span>
+                                    <span class="fw-bold" id="original-total">0.00 บาท</span>
                                 </div>
                             </div>
 
                             <!-- แสดงโปรโมชั่นที่มีในร้าน -->
-                            <div class="mb-4" th:if="${not #lists.isEmpty(allPromotions)}">
+                            <div class="mb-4" id="promotions-block" style="display: none;">
                                 <h6 class="text-muted mb-2 small">📢 โปรโมชั่นของทางร้าน </h6>
                                 <h6 class="text-muted mb-2 small">(คูปองจะถูกใช้โดยอัตโนมัติ)</h6>
                                 <div class="card border-0 bg-white p-2 rounded-2" style="font-size: 0.85rem;">
-                                    <ul class="mb-0 text-secondary ps-3">
-                                        <li th:each="promo : ${allPromotions}">
-                                            <span class="fw-bold" th:text="${promo.name}">ชื่อโปร</span>
-                                            <span th:if="${promo.type == 'discount'}">ลด <span
-                                                    th:text="${promo.value}">10</span> บาท</span>
-                                            <span th:if="${promo.type == 'free_item'}">แถมฟรี <span
-                                                    th:text="${promo.freeProduct != null ? promo.freeProduct.productName : ''}">สินค้า</span></span>
-                                        </li>
+                                    <ul class="mb-0 text-secondary ps-3" id="promotions-list">
                                     </ul>
                                 </div>
                             </div>
 
-                            <div th:if="${discount > 0 or not #lists.isEmpty(promoMessages)}">
+                            <div id="discount-block" style="display: none;">
                                 <div class="alert alert-success py-2 mb-3" style="font-size: 0.9rem;">
-                                    <ul class="mb-0 ps-3">
-                                        <li th:each="msg : ${promoMessages}" th:text="${msg}">ได้รับส่วนลด 10%</li>
+                                    <ul class="mb-0 ps-3" id="promo-messages">
                                     </ul>
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-6"><span class="text-danger fw-bold">ส่วนลด:</span></div>
                                     <div class="col-6 text-end">
-                                        <span class="text-danger fw-bold" th:text="'-' + ${discount} + ' บาท'">-0.00
-                                            บาท</span>
+                                        <span class="text-danger fw-bold" id="discount-amount">-0.00 บาท</span>
                                     </div>
                                 </div>
                             </div>
@@ -113,21 +102,14 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <h6 class="text-muted mb-1">ยอดสุทธิที่ต้องชำระ:</h6>
-                                    <h3 class="text-primary fw-bold text-end" th:text="${finalTotal} + ' บาท'">0.00 บาท
-                                    </h3>
+                                    <h3 class="text-primary fw-bold text-end" id="final-total">0.00 บาท</h3>
                                 </div>
                             </div>
 
-                            <form th:action="@{/payments/save/table/{id}(id=${tableId})}" method="post"
-                                id="paymentForm">
-                                <input type="hidden" name="finalTotal" th:value="${finalTotal}">
-                                <button class="btn btn-success btn-lg w-100 py-3 fw-bold mb-3" type="button"
-                                    onclick="confirmPayment()">
-                                    💸 ชำระเงินสำเร็จ
-                                </button>
-                                <a th:href="@{/tables}"
-                                    class="btn btn-outline-secondary w-100 py-2">กลับไปหน้าจัดการร้าน</a>
-                            </form>
+                            <button class="btn btn-success btn-lg w-100 py-3 fw-bold mb-3" type="button" onclick="confirmPayment()" id="btn-pay" disabled>
+                                💸 ชำระเงินสำเร็จ
+                            </button>
+                            <a href="/tables" class="btn btn-outline-secondary w-100 py-2">กลับไปหน้าจัดการร้าน</a>
                         </div>
                     </div>
                 </div>
@@ -136,6 +118,103 @@
     </div>
 
     <script>
+        const tableId = window.location.pathname.split('/').pop();
+        let currentFinalTotal = 0;
+
+        function showAlert(message, type = 'danger') {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+        }
+
+        async function loadPaymentData() {
+            try {
+                const response = await fetch('/api/payments/checkout/table/' + tableId);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'ไม่สามารถโหลดข้อมูลได้');
+                }
+
+                renderPaymentData(data);
+                
+                // เปิดปุ่มชำระเงิน
+                document.getElementById('btn-pay').removeAttribute('disabled');
+            } catch (error) {
+                console.error(error);
+                showAlert(error.message);
+                document.getElementById('order-items-container').innerHTML = `
+                    <tr><td colspan="4" class="text-center text-danger py-4">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>
+                `;
+            }
+        }
+
+        function renderPaymentData(data) {
+            // 1. วาดตาราง Order Items
+            const tbody = document.getElementById('order-items-container');
+            if (data.aggregatedOrders && data.aggregatedOrders.length > 0) {
+                let rowsHtml = '';
+                data.aggregatedOrders.forEach(summary => {
+                    rowsHtml += `
+                        <tr>
+                            <td>${summary.product ? summary.product.productName : 'สินค้า'}</td>
+                            <td>${summary.quantity}</td>
+                            <td>${summary.unitPrice} ฿</td>
+                            <td class="text-end fw-bold text-primary">${summary.totalPrice} ฿</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rowsHtml;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4">ไม่มีรายการอาหาร</td></tr>`;
+            }
+
+            // 2. อัปเดตยอดรวมเริ่มต้น
+            document.getElementById('original-total').innerText = data.originalTotal + " บาท";
+
+            // 3. จัดการโปรโมชั่นที่มีในร้าน
+            if (data.allPromotions && data.allPromotions.length > 0) {
+                document.getElementById('promotions-block').style.display = 'block';
+                const promoList = document.getElementById('promotions-list');
+                let promosHtml = '';
+                data.allPromotions.forEach(promo => {
+                    let detail = '';
+                    if (promo.type === 'discount' || promo.type === 'baht' || promo.type === 'percent') {
+                        detail = `ลด <span class="fw-bold">${promo.value}</span> ${promo.type === 'percent' ? '%' : 'บาท'}`;
+                    } else if (promo.type === 'add' || promo.type === 'free_item') {
+                        const freeName = promo.freeProduct ? promo.freeProduct.productName : 'สินค้า';
+                        detail = `แถมฟรี <span class="fw-bold">${freeName}</span>`;
+                    }
+                    promosHtml += `<li><span class="fw-bold">${promo.name}</span>: ${detail}</li>`;
+                });
+                promoList.innerHTML = promosHtml;
+            }
+
+            // 4. แสดงข้อความส่วนลดที่ได้รับ (ถ้ามี)
+            if (data.discount > 0 || (data.promoMessages && data.promoMessages.length > 0)) {
+                document.getElementById('discount-block').style.display = 'block';
+                const msgList = document.getElementById('promo-messages');
+                let msgsHtml = '';
+                if (data.promoMessages) {
+                    data.promoMessages.forEach(msg => {
+                        msgsHtml += `<li>${msg}</li>`;
+                    });
+                }
+                msgList.innerHTML = msgsHtml;
+                document.getElementById('discount-amount').innerText = "-" + data.discount + " บาท";
+            } else {
+                document.getElementById('discount-block').style.display = 'none';
+            }
+
+            // 5. อัปเดตยอดสุทธิ
+            currentFinalTotal = data.finalTotal;
+            document.getElementById('final-total').innerText = data.finalTotal + " บาท";
+        }
+
         function confirmPayment() {
             Swal.fire({
                 title: 'ยืนยันการชำระเงิน?',
@@ -146,13 +225,55 @@
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'ยืนยันชำระเงิน',
                 cancelButtonText: 'ยกเลิก'
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('paymentForm').submit();
+                    try {
+                        Swal.fire({
+                            title: 'กำลังดำเนินการ...',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+
+                        const response = await fetch('/api/payments/save/table/' + tableId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ finalTotal: currentFinalTotal })
+                        });
+                        
+                        const resultData = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(resultData.message || 'เกิดข้อผิดพลาดในการชำระเงิน');
+                        }
+
+                        // สำเร็จ
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ!',
+                            text: resultData.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        window.location.href = '/tables';
+                    } catch (error) {
+                        console.error("Payment error:", error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ผิดพลาด',
+                            text: error.message
+                        });
+                    }
                 }
             });
         }
+
+        // เริ่มต้นโหลดเมื่อหน้าพร้อม
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPaymentData();
+        });
     </script>
 </body>
-
 </html>

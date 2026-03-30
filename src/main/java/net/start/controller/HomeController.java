@@ -1,7 +1,9 @@
 package net.start.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller // สำคัญ: ต้องใช้ @Controller เพื่อคืนค่าเป็นหน้า View (HTML)
 public class HomeController {
@@ -61,7 +63,6 @@ public class HomeController {
     public String tablesEdit() {
         return "tables/form";
     }
-    
     @GetMapping("/promotions")
     public String promotions() {
         return "promotions/list";
@@ -75,5 +76,10 @@ public class HomeController {
     @GetMapping("/promotions/edit/{id}")
     public String promotionEdit() {
         return "promotions/form";
+
+    @GetMapping("/payments/checkout/table/{id}")
+    public String paymentCheckout(@PathVariable("id") Integer id, Model model) {
+        model.addAttribute("tableId", id);
+        return "payments/checkout";
     }
 }

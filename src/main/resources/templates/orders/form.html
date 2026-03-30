@@ -1,279 +1,331 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>สั่งอาหาร - Mookata</title>
-<link
-	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-	rel="stylesheet">
-<style>
-body {
-	background-color: #f8f9fa;
-	font-family: 'Kanit', sans-serif;
-}
-
-.menu-card {
-	border: none;
-	border-radius: 15px;
-	transition: transform 0.2s;
-	overflow: hidden;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.menu-card:hover {
-	transform: translateY(-5px);
-}
-
-.qty-input {
-	width: 50px;
-	text-align: center;
-	border: none;
-	background: transparent;
-	font-weight: bold;
-}
-
-.btn-qty {
-	width: 35px;
-	height: 35px;
-	border-radius: 50% !important;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0;
-}
-
-.order-sidebar {
-	position: sticky;
-	top: 20px;
-}
-
-.table-header {
-	background: linear-gradient(135deg, #ff9800, #f44336);
-	color: white;
-	padding: 20px;
-	border-radius: 15px;
-	margin-bottom: 30px;
-}
-
-#loading-overlay {
-    text-align: center;
-    padding: 50px;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>สั่งอาหาร - Mookata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen pb-24">
 
-	<div class="container py-4">
-		<div class="table-header shadow-sm d-flex justify-content-between align-items-center">
-			<div>
-				<h2 class="mb-0">🎇🎇🎇 The Star MooKaTa 🎇🎇🎇</h2>
-				<p class="mb-0" id="tableInfoText">
-					กำลังดึงข้อมูลโต๊ะ...
-				</p>
-			</div>
-			<a href="/tables" class="btn btn-outline-light btn-sm">เปลี่ยนโต๊ะ</a>
-		</div>
-
-        <div id="loading-overlay">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+    <div class="bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-center sm:text-left">
+                <h1 class="text-2xl font-bold tracking-wide flex items-center justify-center sm:justify-start gap-2">
+                    <i class="fa-solid fa-fire text-yellow-300"></i> The Star MooKaTa <i class="fa-solid fa-fire text-yellow-300"></i>
+                </h1>
+                <p id="tableInfoText" class="mt-1 text-orange-100 font-medium">กำลังโหลดข้อมูล...</p>
             </div>
-            <p class="mt-2 text-muted">กำลังโหลดเมนูอาหาร...</p>
+            <a href="/tables" class="bg-white/10 hover:bg-white/20 border border-white/30 text-white px-5 py-2 rounded-lg font-medium transition-colors backdrop-blur-sm text-sm whitespace-nowrap">
+                <i class="fa-solid fa-arrow-right-arrow-left mr-1"></i> เปลี่ยนโต๊ะ
+            </a>
         </div>
+    </div>
 
-		<div id="main-content" style="display: none;">
-			<div class="row">
-				<div class="col-lg-8">
-					<h4 class="mb-3">เมนูอาหาร</h4>
-					<div class="row g-3" id="menuContainer">
-						<!-- เมนูจะโหลดผ่าน JS -->
-					</div>
-				</div>
+    <div class="max-w-7xl mx-auto p-4 pt-8">
+        <div id="alertContainer"></div>
 
-				<div class="col-lg-4">
-					<div class="card order-sidebar shadow-sm border-0 rounded-4">
-						<div class="card-body p-4">
-							<h5 class="text-center">📋 รายการที่สั่งไปแล้ว</h5>
-							<hr>
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="flex-1">
+                <div class="flex justify-between items-end mb-4">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center">
+                        <i class="fa-solid fa-book-open-reader mr-2 text-blue-600"></i> เลือกเมนูอาหาร
+                    </h2>
+                </div>
 
-							<div class="past-orders-list mb-4" id="pastOrdersContainer"
-								style="max-height: 350px; overflow-y: auto;">
-								<!-- รายการที่สั่งไปแล้วจะโหลดผ่าน JS -->
-							</div>
+                <div class="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide" id="categoriesContainer">
+                    <!-- Categories -->
+                </div>
 
-							<div class="text-center">
-								<h5>🛒 สั่งอาหารเพิ่ม</h5>
-								<hr>
-								<p class="text-muted small">
-									เลือกรายการอาหาร<br>แล้วกดปุ่มเพื่อสั่งเพิ่ม
-								</p>
-								<button type="button" id="submitOrderBtn"
-									class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow">
-									ส่งรายการอาหาร</button>
-								<a href="/"
-									class="btn btn-link mt-2 text-decoration-none text-muted d-block text-center">กลับหน้าหลัก</a>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" id="menuContainer">
+                    <!-- Products -->
+                </div>
+            </div>
 
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-	<script>
-    const API_BASE = '/api/orders';
-    
-    // ดึง tableId จาก URL เช่น /orders/5
-    const pathParts = window.location.pathname.split('/');
-    const tableId = pathParts[pathParts.length - 1];
+            <div class="lg:w-80 xl:w-96 shrink-0">
+                <div class="bg-white rounded-3xl shadow-lg border border-slate-100 sticky top-6 overflow-hidden">
+                    <div class="bg-slate-800 p-5 text-center">
+                        <h5 class="text-white font-bold text-lg flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-blue-400"></i> บิลปัจจุบัน
+                        </h5>
+                    </div>
 
-    let productsList = [];
+                    <div class="p-5">
+                        <div class="mb-6">
+                            <p class="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider text-center">รายการที่อยู่ในครัว</p>
+                            <div id="pastOrdersContainer">
+                                <!-- Past Orders -->
+                            </div>
+                        </div>
 
-    async function initPage() {
-        if (!tableId || isNaN(tableId)) {
-            alert('ไม่พบรหัสโต๊ะ');
-            window.location.href = '/tables';
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/${tableId}`);
-            if (!response.ok) throw new Error('Failed to load data');
-            const data = await response.json();
-
-            document.getElementById('tableInfoText').innerHTML = `กำลังสั่งอาหารสำหรับ: <strong>โต๊ะ ${tableId}</strong>`;
-            
-            productsList = data.products;
-            renderMenu(data.products);
-            renderPastOrders(data.aggregatedOrders);
-
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
-        }
-    }
-
-    function renderMenu(products) {
-        const container = document.getElementById('menuContainer');
-        container.innerHTML = '';
-
-        products.forEach(p => {
-            const col = document.createElement('div');
-            col.className = 'col-md-6 col-xl-4';
-            col.innerHTML = `
-                <div class="card menu-card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">${p.productName}</h5>
-                        <p class="text-danger fw-bold mb-3">${p.productPrice} บาท</p>
-
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded-pill p-1">
-                            <button type="button" class="btn btn-white btn-qty shadow-sm" onclick="decreaseQty(this)">-</button>
-                            <input type="number" id="qty_${p.productId}" value="0" min="0" class="qty-input" readonly>
-                            <button type="button" class="btn btn-white btn-qty shadow-sm" onclick="increaseQty(this)">+</button>
+                        <hr class="border-slate-100 mb-6">
+                        <div class="text-center">
+                            <p class="text-slate-500 text-sm mb-4">
+                                เลือกจำนวนอาหารในหน้าเมนู<br>แล้วกดปุ่มด้านล่างเพื่อส่งเข้าครัว
+                            </p>
+                            <button id="submitOrderBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-bell-concierge"></i> ยืนยันสั่งอาหาร
+                            </button>
+                            <a href="/tables" class="inline-block mt-4 text-slate-400 hover:text-slate-600 font-medium text-sm transition-colors">
+                                <i class="fa-solid fa-arrow-left mr-1"></i> กลับหน้าจัดการโต๊ะ
+                            </a>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/orders';
+        const pathParts = window.location.pathname.split('/');
+        const tableId = pathParts[pathParts.length - 1];
+        
+        // เราจะเก็บ state สินค้าใน global ด้วย Map หรือ Array
+        let currentCategoryId = null;
+        let productsList = [];
+        // cart state: { productId: qty } 
+        // We persist this temporary state while switching categories
+        let cartState = {};
+
+        async function initPage() {
+            if (!tableId || isNaN(tableId)) {
+                alert('ไม่พบรหัสโต๊ะ');
+                window.location.href = '/tables';
+                return;
+            }
+            fetchOrderData();
+        }
+
+        async function fetchOrderData() {
+            try {
+                let url = `${API_BASE}/${tableId}`;
+                if (currentCategoryId) url += `?categoryId=${currentCategoryId}`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load data');
+                const data = await response.json();
+
+                document.getElementById('tableInfoText').innerHTML = `กำลังสั่งอาหารสำหรับ: <span class="bg-white/20 px-2 py-0.5 rounded-md text-white font-bold ml-1">โต๊ะ ${tableId}</span>`;
+                
+                productsList = data.products;
+                renderCategories(data.categories, data.activeCategoryId);
+                renderMenu(data.products);
+                renderPastOrders(data.aggregatedOrders);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
+            }
+        }
+
+        function getEmojiForProduct(name) {
+            name = name.toLowerCase();
+            if (name.includes('สามชั้น') || name.includes('เบคอน')) return '🥓';
+            if (name.includes('กุ้ง')) return '🦐';
+            if (name.includes('หมึก')) return '🦑';
+            if (name.includes('ไข่')) return '🥚';
+            if (name.includes('ชีส')) return '🧀';
+            if (name.includes('ลูกชิ้น')) return '🍢';
+            if (name.includes('ข้าวโพด')) return '🌽';
+            if (name.includes('เห็ด')) return '🍄';
+            if (name.includes('น้ำแข็ง')) return '🧊';
+            if (name.includes('น้ำเปล่า')) return '💧';
+            return null;
+        }
+        
+        function getEmojiForCategory(catName) {
+            if (!catName) return '🍽️';
+            switch (catName) {
+                case 'เนื้อสัตว์': return '🥩';
+                case 'อาหารทะเล': return '🐟';
+                case 'ของทานเล่น': return '🧆';
+                case 'ผัก': return '🥬';
+                case 'เส้น': return '🍜';
+                case 'เครื่องดื่ม': return '🥤';
+                case 'เซ็ต': return '🥘';
+                default: return '🍽️';
+            }
+        }
+
+        function renderCategories(categories, activeId) {
+            const container = document.getElementById('categoriesContainer');
+            let html = `
+                <button onclick="changeCategory(null)" 
+                   class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${(!activeId) ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
+                    ทั้งหมด
+                </button>
             `;
-            container.appendChild(col);
-        });
-    }
-
-    function renderPastOrders(aggregatedOrders) {
-        const container = document.getElementById('pastOrdersContainer');
-        
-        if (!aggregatedOrders || aggregatedOrders.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-4">
-                    <p class="text-muted small">ยังไม่มีรายการอาหารที่สั่ง</p>
-                </div>`;
-            return;
-        }
-
-        let html = `
-            <div class="card border-0 bg-light shadow-sm">
-                <div class="card-body p-3">
-                    <h6 class="fw-bold text-primary mb-3">📍 รายการที่สั่งรวม</h6>`;
-        
-        aggregatedOrders.forEach(summary => {
-            html += `
-                <div class="d-flex justify-content-between small border-bottom py-2">
-                    <span>${summary.product.productName}</span>
-                    <span class="fw-bold text-danger">x${summary.quantity}</span>
-                </div>`;
-        });
-
-        html += `</div></div>`;
-        container.innerHTML = html;
-    }
-
-    function increaseQty(btn) {
-        const input = btn.previousElementSibling;
-        input.value = parseInt(input.value) + 1;
-    }
-
-    function decreaseQty(btn) {
-        const input = btn.nextElementSibling;
-        if (parseInt(input.value) > 0) {
-            input.value = parseInt(input.value) - 1;
-        }
-    }
-
-    // ส่งออเดอร์
-    document.getElementById('submitOrderBtn').addEventListener('click', async () => {
-        const quantities = {};
-        let hasItems = false;
-
-        productsList.forEach(p => {
-            const qty = parseInt(document.getElementById(`qty_${p.productId}`).value);
-            if (qty > 0) {
-                quantities[p.productId] = qty;
-                hasItems = true;
+            if (categories) {
+                categories.forEach(cat => {
+                    const isActive = (activeId == cat.categoriesId);
+                    html += `
+                    <button onclick="changeCategory(${cat.categoriesId})" 
+                       class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
+                        ${cat.categoriesName}
+                    </button>
+                    `;
+                });
             }
-        });
-
-        if (!hasItems) {
-            alert('กรุณาเลือกรายการอาหารอย่างน้อย 1 อย่าง');
-            return;
+            container.innerHTML = html;
         }
 
-        const btn = document.getElementById('submitOrderBtn');
-        btn.disabled = true;
-        btn.innerText = 'กำลังส่งรายการ...';
+        function renderMenu(products) {
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = '';
 
-        try {
-            const response = await fetch(`${API_BASE}/save`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tableId: parseInt(tableId),
-                    quantities: quantities
-                })
+            if(products.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-10 text-center text-slate-500">ไม่มีรายการสินค้า</div>`;
+                return;
+            }
+
+            products.forEach(p => {
+                const catName = p.categories ? p.categories.categoriesName : '-';
+                let emoji = getEmojiForProduct(p.productName) || getEmojiForCategory(catName);
+                const priceFormatted = Number(p.productPrice).toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                const qty = cartState[p.productId] || 0;
+                
+                let html = `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative">
+                    <div class="flex gap-4">
+                        <div class="text-4xl bg-slate-50 p-2 rounded-xl w-14 h-14 flex items-center justify-center border border-slate-100 shadow-inner shrink-0">
+                            ${emoji}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-slate-800 text-md truncate">${p.productName}</h3>
+                            <p class="text-orange-600 font-bold text-sm mt-1">฿<span>${priceFormatted}</span></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-slate-50 rounded-xl p-1 flex justify-between items-center border border-slate-100 qty-controls ${qty > 0 ? 'border-blue-300 bg-blue-50/50' : ''}">
+                        <button type="button" onclick="updateQty(${p.productId}, -1)" class="w-10 h-10 rounded-lg bg-white text-rose-500 hover:bg-rose-50 border border-slate-200 shadow-sm flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-minus text-sm"></i>
+                        </button>
+                        <input type="number" id="qty_${p.productId}" value="${qty}" min="0" readonly class="w-16 text-center bg-transparent font-bold text-lg text-slate-800 focus:outline-none">
+                        <button type="button" onclick="updateQty(${p.productId}, 1)" class="w-10 h-10 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += html;
             });
-
-            const result = await response.json();
-            if (response.ok) {
-                alert(result.message);
-                // รีโหลดข้อมูลเพื่อดูรายการที่สั่งไปแล้วล่าสุด
-                location.reload();
-            } else {
-                alert(result.message || 'เกิดข้อผิดพลาดในการสั่งอาหาร');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'ส่งรายการอาหาร';
         }
-    });
 
-    document.addEventListener('DOMContentLoaded', initPage);
-</script>
+        function updateQty(productId, amount) {
+            const input = document.getElementById(`qty_${productId}`);
+            let newQty = parseInt(input.value) + amount;
+            if (newQty < 0) newQty = 0;
+            input.value = newQty;
+            cartState[productId] = newQty;
 
+            const controls = input.parentElement;
+            if (newQty > 0) {
+                controls.classList.add('border-blue-300', 'bg-blue-50/50');
+            } else {
+                controls.classList.remove('border-blue-300', 'bg-blue-50/50');
+            }
+        }
+
+        function renderPastOrders(aggregatedOrders) {
+            const container = document.getElementById('pastOrdersContainer');
+            
+            if (!aggregatedOrders || aggregatedOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        <i class="fa-solid fa-utensils text-slate-300 text-2xl mb-2"></i>
+                        <p class="text-slate-400 text-sm">ยังไม่มีรายการสั่งอาหาร</p>
+                    </div>`;
+                return;
+            }
+
+            let html = `<div class="bg-slate-50 rounded-xl border border-slate-100 p-3 max-h-60 overflow-y-auto scrollbar-hide">`;
+            aggregatedOrders.forEach(summary => {
+                html += `
+                    <div class="flex justify-between items-center py-2 border-b border-slate-200/60 last:border-0">
+                        <span class="text-sm font-medium text-slate-700 truncate pr-2">${summary.product.productName}</span>
+                        <span class="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md text-xs">x${summary.quantity}</span>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function changeCategory(catId) {
+            currentCategoryId = catId;
+            fetchOrderData();
+        }
+
+        function showAlert(msg, type='success') {
+            const container = document.getElementById('alertContainer');
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+            const colorClass = type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700';
+            const btnClass = type === 'success' ? 'text-emerald-500 hover:text-emerald-700' : 'text-rose-500 hover:text-rose-700';
+            
+            container.innerHTML = `
+            <div class="${colorClass} border px-4 py-3 rounded-xl mb-6 flex justify-between items-center shadow-sm">
+                <div class="flex items-center gap-2"><i class="fa-solid ${icon}"></i> <span>${msg}</span></div>
+                <button onclick="this.parentElement.remove()" class="${btnClass}"><i class="fa-solid fa-xmark"></i></button>
+            </div>`;
+        }
+
+        // Submit Logic
+        document.getElementById('submitOrderBtn').addEventListener('click', async () => {
+            const quantities = {};
+            let hasItems = false;
+
+            // We iterate over the entire cartState (so if they changed category, it still remembers)
+            for (const [pId, qty] of Object.entries(cartState)) {
+                if (qty > 0) {
+                    quantities[pId] = qty;
+                    hasItems = true;
+                }
+            }
+
+            if (!hasItems) {
+                showAlert('กรุณาเลือกรายการอาหารอย่างน้อย 1 อย่าง', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('submitOrderBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังส่งรายการ...`;
+
+            try {
+                const response = await fetch(`${API_BASE}/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tableId: parseInt(tableId),
+                        quantities: quantities
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showAlert(result.message, 'success');
+                    // Reset cart
+                    cartState = {};
+                    fetchOrderData(); // Reload menu & history
+                } else {
+                    showAlert(result.message || 'เกิดข้อผิดพลาดในการสั่งอาหาร', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-bell-concierge"></i> ยืนยันสั่งอาหาร`;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
 </body>
 </html>
