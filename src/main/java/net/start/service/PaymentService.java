@@ -32,7 +32,7 @@ public class PaymentService {
     private TablesRepository tablesRepository;
 
     @Transactional
-    public void processTablePayment(Integer tableId, BigDecimal finalAmount) {
+    public void processTablePayment(Integer tableId, BigDecimal finalAmount, BigDecimal originalAmount, BigDecimal discountAmount, String couponCode) {
         Tables table = tablesRepository.findById(tableId).orElseThrow(() -> new IllegalArgumentException("Invalid Table ID"));
         List<Ordermenu> activeOrders = ordermenuRepository.findByTables_TableIdAndOrderStatusNot(tableId, "paid");
         
@@ -40,15 +40,20 @@ public class PaymentService {
             throw new IllegalArgumentException("No active orders for this table.");
         }
 
+        // บันทึกการชำระเงินลงในตาราง Payment (อ้างอิงจากออเดอร์ใบแรก)
         Payment payment = new Payment();
-        // Link the payment to the first active order for simplicity
         payment.setOrdermenu(activeOrders.get(0));
         payment.setAmount(finalAmount);
         payment.setPaymentTime(Timestamp.from(Instant.now()));
         paymentRepository.save(payment);
 
+        // อัปเดตสถานะและเก็บข้อมูลส่วนลด/คูปองลงใน Ordermenu ทุกใบของโต๊ะนี้
         for (Ordermenu order : activeOrders) {
             order.setOrderStatus("paid");
+            order.setTotalAmount(finalAmount); // ยอดที่จ่ายจริง
+            order.setOriginalAmount(originalAmount); // ยอดก่อนลด
+            order.setDiscountAmount(discountAmount); // จำนวนส่วนลด
+            order.setCouponCode(couponCode); // รหัสคูปอง
             ordermenuRepository.save(order);
         }
 

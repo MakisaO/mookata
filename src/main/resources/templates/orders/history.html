@@ -97,7 +97,9 @@ body {
                             <th>วันที่/เวลา</th>
                             <th>โต๊ะ</th>
                             <th>รายการอาหาร</th>
-                            <th class="text-end">ยอดสุทธิ</th>
+                            <th class="text-end">ยอดเต็ม</th>
+                            <th class="text-end text-danger">ส่วนลด</th>
+                            <th class="text-end text-success">ยอดจ่ายจริง</th>
                             <th class="text-center">การจัดการ</th>
                         </tr>
                     </thead>
@@ -193,11 +195,18 @@ body {
                 }
                 menuHtml += '</ul>';
 
+                const originalAmount = order.originalAmount || order.totalAmount || 0;
+                const discountAmount = order.discountAmount || 0;
+                const finalAmount = order.totalAmount || 0;
+                const couponBadge = order.couponCode ? `<br><small class="badge bg-info text-dark">🎟️ ${order.couponCode}</small>` : '';
+
                 row.innerHTML = `
                     <td>${formatDate(order.orderDate)}</td>
                     <td><span class="badge bg-dark">โต๊ะ ${order.tables ? order.tables.tableId : '-'}</span></td>
-                    <td>${menuHtml}</td>
-                    <td class="text-end fw-bold text-success">${formatMoney(order.totalAmount)} ฿</td>
+                    <td>${menuHtml}${couponBadge}</td>
+                    <td class="text-end">${formatMoney(originalAmount)} ฿</td>
+                    <td class="text-end text-danger">-${formatMoney(discountAmount)} ฿</td>
+                    <td class="text-end fw-bold text-success">${formatMoney(finalAmount)} ฿</td>
                     <td class="text-center">
                         <a href="/orders/history/${order.orderId}" class="btn btn-sm btn-outline-primary">
                             🔍 ดูรายละเอียด

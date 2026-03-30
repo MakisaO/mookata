@@ -97,6 +97,27 @@
                                 </div>
                             </div>
 
+                            <hr class="my-3">
+                            
+                            <!-- ช่องกรอกคูปอง -->
+                            <div class="mb-4">
+                                <label class="small fw-bold text-muted mb-2">🎟️ รหัสคูปองส่วนลด</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" id="coupon-code-input" placeholder="กรอกรหัสคูปอง...">
+                                    <button class="btn btn-primary btn-sm" type="button" onclick="applyCoupon()">ใช้งาน</button>
+                                </div>
+                                <div id="coupon-message" class="small mt-1" style="display: none;"></div>
+                            </div>
+
+                            <div id="coupon-discount-block" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-6"><span class="text-success fw-bold">คูปองส่วนลด:</span></div>
+                                    <div class="col-6 text-end">
+                                        <span class="text-success fw-bold" id="coupon-discount-amount">-0.00 บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <hr class="my-4">
 
                             <div class="row mb-4">
@@ -130,6 +151,10 @@
     <script>
         const tableId = window.location.pathname.split('/').pop();
         let currentFinalTotal = 0;
+        let serverFinalTotal = 0; // ยอดรวมที่เซิร์ฟเวอร์หักส่วนลดร้านมาให้แล้ว
+        let serverOriginalTotal = 0; // ยอดเต็มจากร้านแบบยังไม่ลดอะไรเลย
+        let currentCouponDiscount = 0;
+        let appliedCouponCode = null;
 
         function showAlert(message, type = 'danger') {
             const container = document.getElementById('alert-container');
@@ -184,6 +209,7 @@
             }
 
             // 2. อัปเดตยอดรวมเริ่มต้น
+            serverOriginalTotal = data.originalTotal;
             document.getElementById('original-total').innerText = data.originalTotal + " บาท";
 
             // 3. จัดการโปรโมชั่นที่มีในร้าน
@@ -221,8 +247,8 @@
             }
 
             // 5. อัปเดตยอดสุทธิ
-            currentFinalTotal = data.finalTotal;
-            document.getElementById('final-total').innerText = data.finalTotal + " บาท";
+            serverFinalTotal = data.finalTotal;
+            updateFinalTotalDisplay();
 
             // 6. จัดการโปรโมชั่นร้านเพื่อน (Dynamic Mapping)
             if (data.partnerPromotions && data.partnerPromotions.length > 0) {
@@ -252,6 +278,59 @@
             }
         }
 
+        async function applyCoupon() {
+            const codeInput = document.getElementById('coupon-code-input');
+            const messageDiv = document.getElementById('coupon-message');
+            const discountBlock = document.getElementById('coupon-discount-block');
+            const code = codeInput.value.trim();
+
+            if (!code) return;
+
+            try {
+                const response = await fetch(`/api/coupons/validate/${code}`);
+                if (!response.ok) throw new Error('คูปองไม่ถูกต้องหรือถูกใช้ไปแล้ว');
+
+                const coupon = await response.json();
+                const promo = coupon.promotion;
+
+                let discount = 0;
+                if (promo.type === 'baht' || (promo.type === 'percent' && promo.percent === null)) {
+                    discount = promo.value || 0;
+                } else if (promo.type === 'percent') {
+                    const rate = (promo.percent || promo.value || 0) / 100;
+                    discount = serverFinalTotal * rate;
+                }
+
+                appliedCouponCode = coupon.code;
+                currentCouponDiscount = discount;
+
+                document.getElementById('coupon-discount-amount').innerText = `-${discount.toFixed(2)} บาท`;
+                discountBlock.style.display = 'block';
+                
+                messageDiv.innerText = `✅ ใช้คูปอง ${promo.name} สำเร็จ!`;
+                messageDiv.className = "small mt-1 text-success fw-bold";
+                messageDiv.style.display = 'block';
+
+                updateFinalTotalDisplay();
+
+            } catch (error) {
+                appliedCouponCode = null;
+                currentCouponDiscount = 0;
+                discountBlock.style.display = 'none';
+                updateFinalTotalDisplay();
+
+                messageDiv.innerText = `❌ ${error.message}`;
+                messageDiv.className = "small mt-1 text-danger fw-bold";
+                messageDiv.style.display = 'block';
+            }
+        }
+
+        function updateFinalTotalDisplay() {
+            currentFinalTotal = serverFinalTotal - currentCouponDiscount;
+            if (currentFinalTotal < 0) currentFinalTotal = 0;
+            document.getElementById('final-total').innerText = currentFinalTotal.toFixed(2) + " บาท";
+        }
+
         function confirmPayment() {
             Swal.fire({
                 title: 'ยืนยันการชำระเงิน?',
@@ -276,7 +355,12 @@
                             headers: {
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ finalTotal: currentFinalTotal })
+                            body: JSON.stringify({ 
+                                finalTotal: currentFinalTotal,
+                                originalTotal: serverOriginalTotal,
+                                totalDiscount: (serverOriginalTotal - currentFinalTotal),
+                                couponCode: appliedCouponCode 
+                            })
                         });
                         
                         const resultData = await response.json();

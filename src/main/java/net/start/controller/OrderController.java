@@ -123,6 +123,9 @@ public class OrderController {
 		orderResponse.put("orderDate", order.getOrderDate());
 		orderResponse.put("orderStatus", order.getOrderStatus());
 		orderResponse.put("totalAmount", order.getTotalAmount());
+		orderResponse.put("originalAmount", order.getOriginalAmount());
+		orderResponse.put("discountAmount", order.getDiscountAmount());
+		orderResponse.put("couponCode", order.getCouponCode());
 
 		Map<String, Object> tableInfo = new HashMap<>();
 		tableInfo.put("tableId", order.getTables() != null ? order.getTables().getTableId() : null);

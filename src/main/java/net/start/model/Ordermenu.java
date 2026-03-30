@@ -41,6 +41,15 @@ public class Ordermenu implements java.io.Serializable {
 	@Column(name = "totalAmount")
 	private BigDecimal totalAmount;
 
+	@Column(name = "originalAmount")
+	private BigDecimal originalAmount;
+
+	@Column(name = "discountAmount")
+	private BigDecimal discountAmount;
+
+	@Column(name = "couponCode")
+	private String couponCode;
+
 	@JsonManagedReference(value="order-details")
 	@OneToMany(mappedBy = "ordermenu", cascade = CascadeType.ALL)
 	private List<OrderDetail> orderDetails = new ArrayList<>();
@@ -90,6 +99,30 @@ public class Ordermenu implements java.io.Serializable {
 
 	public void setTotalAmount(BigDecimal totalAmount) {
 		this.totalAmount = totalAmount;
+	}
+
+	public BigDecimal getOriginalAmount() {
+		return originalAmount;
+	}
+
+	public void setOriginalAmount(BigDecimal originalAmount) {
+		this.originalAmount = originalAmount;
+	}
+
+	public BigDecimal getDiscountAmount() {
+		return discountAmount;
+	}
+
+	public void setDiscountAmount(BigDecimal discountAmount) {
+		this.discountAmount = discountAmount;
+	}
+
+	public String getCouponCode() {
+		return couponCode;
+	}
+
+	public void setCouponCode(String couponCode) {
+		this.couponCode = couponCode;
 	}
 
 	public List<OrderDetail> getOrderDetails() {

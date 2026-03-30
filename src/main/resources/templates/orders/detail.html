@@ -97,19 +97,23 @@ body {
                             <!-- Data populated via JS -->
                         </tbody>
                         <tfoot class="border-top-0">
+                            <tr class="border-top">
+                                <td colspan="3" class="text-end pt-3">ยอดรวม:</td>
+                                <td class="text-end pt-3" id="originalTotalText">0.00 ฿</td>
+                            </tr>
+                            <tr id="discountRow" style="display: none;">
+                                <td colspan="3" class="text-end text-danger pt-1">
+                                    <span id="couponBadge" class="badge bg-info text-dark me-1" style="display: none;"></span> ส่วนลด:
+                                </td>
+                                <td class="text-end text-danger pt-1" id="discountAmountText">-0.00 ฿</td>
+                            </tr>
                             <tr>
-                                <td colspan="3" class="text-end fw-bold fs-5 pt-4">ยอดสุทธิรวมทั้งสิ้น:</td>
-                                <td class="text-end fw-bold fs-4 text-success pt-4" id="totalAmountText">0.00 ฿</td>
+                                <td colspan="3" class="text-end fw-bold fs-5 pt-1">ยอดจ่ายจริง:</td>
+                                <td class="text-end fw-bold fs-4 text-success pt-1" id="totalAmountText">0.00 ฿</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-            </div>
-            
-            <div class="text-center mt-5">
-                <button class="btn btn-primary px-4" onclick="window.print()">
-                    <i class="bi bi-printer"></i> พิมพ์ใบเสร็จ
-                </button>
             </div>
         </div>
 	</div>
@@ -168,7 +172,26 @@ body {
             document.getElementById('tableIdText').innerText = `โต๊ะ ${order.tables ? order.tables.tableId : '-'}`;
             document.getElementById('orderDateText').innerText = formatDate(order.orderDate);
             document.getElementById('orderStatusText').innerText = order.orderStatus;
-            document.getElementById('totalAmountText').innerText = `${formatMoney(order.totalAmount)} ฿`;
+
+            // คำนวณและแสดงผลเงิน
+            const originalAmount = order.originalAmount || order.totalAmount || 0;
+            const discountAmount = order.discountAmount || 0;
+            const finalAmount = order.totalAmount || 0;
+
+            document.getElementById('originalTotalText').innerText = `${formatMoney(originalAmount)} ฿`;
+            document.getElementById('totalAmountText').innerText = `${formatMoney(finalAmount)} ฿`;
+
+            // จัดการบัตรของแถม/คูปอง
+            if (discountAmount > 0 || order.couponCode) {
+                document.getElementById('discountRow').style.display = 'table-row';
+                document.getElementById('discountAmountText').innerText = `-${formatMoney(discountAmount)} ฿`;
+                
+                if (order.couponCode) {
+                    const badge = document.getElementById('couponBadge');
+                    badge.innerText = `🎟️ ${order.couponCode}`;
+                    badge.style.display = 'inline-block';
+                }
+            }
 
             // เติมรายการอาหาร
             const tbody = document.getElementById('orderItemsTable');

@@ -25,9 +25,6 @@ import net.start.service.OrdermenuService;
 import net.start.service.PaymentService;
 import net.start.service.PromotionService;
 import net.start.service.PartnerCouponService;
-import java.util.Collections;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -106,8 +103,16 @@ public class PaymentController {
             Object finalTotalObj = payload.get("finalTotal");
             BigDecimal finalTotal = (finalTotalObj != null) ? new BigDecimal(finalTotalObj.toString()) : BigDecimal.ZERO;
             
-            // 1. Process Internal Payment
-            paymentService.processTablePayment(tableId, finalTotal);
+            Object originalTotalObj = payload.get("originalTotal");
+            BigDecimal originalTotal = (originalTotalObj != null) ? new BigDecimal(originalTotalObj.toString()) : finalTotal;
+
+            Object totalDiscountObj = payload.get("totalDiscount");
+            BigDecimal totalDiscount = (totalDiscountObj != null) ? new BigDecimal(totalDiscountObj.toString()) : BigDecimal.ZERO;
+
+            String couponCode = (String) payload.get("couponCode");
+
+            // 1. Process Internal Payment (ส่งค่ายอดก่อนลด และยอดส่วนลดไปด้วย)
+            paymentService.processTablePayment(tableId, finalTotal, originalTotal, totalDiscount, couponCode);
             
             // 2. Process Partner Coupon (Service handled)
             try {
