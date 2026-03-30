@@ -20,8 +20,8 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Intege
            "GROUP BY p ORDER BY total ASC")
     List<Object[]> findLeastSellingProducts(Pageable pageable);
 
-    @Query("SELECT od FROM OrderDetail od JOIN FETCH od.ordermenu o JOIN FETCH o.tables " +
-           "WHERE od.product.productId = :productId AND o.orderStatus = 'paid' " +
+    @Query("SELECT od FROM OrderDetail od JOIN FETCH od.ordermenu o LEFT JOIN FETCH o.tables " +
+           "WHERE od.product.productId = :productId AND o.orderStatus IN ('paid', 'completed') " +
            "ORDER BY o.orderDate DESC")
     List<OrderDetail> findSalesHistoryByProduct(@Param("productId") Integer productId);
 }

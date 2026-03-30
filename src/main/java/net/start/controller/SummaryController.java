@@ -66,6 +66,19 @@ public class SummaryController {
     public ResponseEntity<Map<String, Object>> getProductSales(@PathVariable("id") Integer id) {
         Product product = productService.findById(id);
         List<OrderDetail> salesHistory = ordermenuService.getProductSalesHistory(id);
+        List<Map<String, Object>> salesHistoryResponse = salesHistory.stream()
+            .map(detail -> {
+                Map<String, Object> item = new HashMap<>();
+                item.put("orderDate", detail.getOrdermenu().getOrderDate());
+                item.put("tableId", detail.getOrdermenu().getTables() != null
+                        ? detail.getOrdermenu().getTables().getTableId()
+                        : null);
+                item.put("orderId", detail.getOrdermenu().getOrderId());
+                item.put("quantity", detail.getQuantity());
+                item.put("unitPrice", detail.getUnitPrice());
+                item.put("lineTotal", detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getQuantity())));
+                return item;
+            }).toList();
 
         int totalSold = salesHistory.stream().mapToInt(OrderDetail::getQuantity).sum();
         BigDecimal totalRevenue = salesHistory.stream()
@@ -74,7 +87,7 @@ public class SummaryController {
 
         Map<String, Object> response = new HashMap<>();
         response.put("product", product);
-        response.put("salesHistory", salesHistory);
+        response.put("salesHistory", salesHistoryResponse);
         response.put("totalSold", totalSold);
         response.put("totalRevenue", totalRevenue);
 
