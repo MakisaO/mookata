@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: Mookata Management System API
+  description: API and Web endpoints for the Mookata restaurant management system.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  # REST API Endpoints
+  /api/products:
+    get:
+      tags:
+        - REST API
+      summary: Get all products
+      responses:
+        '200':
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+  /api/products/{id}:
+    get:
+      tags:
+        - REST API
+      summary: Get product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A product object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+  /api/products/available:
+    get:
+      tags:
+        - REST API
+      summary: Get available products
+      responses:
+        '200':
+          description: A list of available products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+  /api/promotions:
+    get:
+      tags:
+        - REST API
+      summary: Get all promotions
+      responses:
+        '200':
+          description: A list of promotions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Promotion'
+  /api/promotions/{id}:
+    get:
+      tags:
+        - REST API
+      summary: Get promotion by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A promotion object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+
+  # Web Endpoints (HTML)
+  /tables:
+    get:
+      tags:
+        - Tables (Web)
+      summary: List all tables
+      responses:
+        '200':
+          description: HTML page with table list
+  /tables/new:
+    get:
+      tags:
+        - Tables (Web)
+      summary: Form to create a new table
+      responses:
+        '200':
+          description: HTML form
+  /tables/save:
+    post:
+      tags:
+        - Tables (Web)
+      summary: Save a new table
+      responses:
+        '302':
+          description: Redirect to table list
+  /tables/edit/{id}:
+    get:
+      tags:
+        - Tables (Web)
+      summary: Form to edit a table
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML form
+  /tables/update/{id}:
+    post:
+      tags:
+        - Tables (Web)
+      summary: Update a table
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '302':
+          description: Redirect to table list
+
+  /menu:
+    get:
+      tags:
+        - Menu (Web)
+      summary: List all menu items
+      responses:
+        '200':
+          description: HTML page with menu list
+
+  /orders/new:
+    get:
+      tags:
+        - Orders (Web)
+      summary: Form to place a new order
+      responses:
+        '200':
+          description: HTML form
+
+  /kitchen:
+    get:
+      tags:
+        - Kitchen (Web)
+      summary: Kitchen dashboard
+      responses:
+        '200':
+          description: HTML dashboard
+
+  /payments/checkout/table/{tableId}:
+    get:
+      tags:
+        - Payments (Web)
+      summary: Checkout page for a table
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: HTML checkout page
+
+components:
+  schemas:
+    Categories:
+      type: object
+      properties:
+        categoriesId:
+          type: integer
+        categoriesName:
+          type: string
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+        categories:
+          $ref: '#/components/schemas/Categories'
+        productName:
+          type: string
+        productDetail:
+          type: string
+        productPrice:
+          type: number
+          format: double
+        productStatus:
+          type: string
+    Promotion:
+      type: object
+      properties:
+        promotionId:
+          type: integer
+        name:
+          type: string
+        detail:
+          type: string
+        type:
+          type: string
+        value:
+          type: number
+        percent:
+          type: number
+        quantity:
+          type: integer
+        freeProduct:
+          $ref: '#/components/schemas/Product'
+        minspend:
+          type: number
+        reqProduct:
+          $ref: '#/components/schemas/Product'
+        reqQuantity:
+          type: integer
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+    Tables:
+      type: object
+      properties:
+        tableId:
+          type: integer
+        status:
+          type: string

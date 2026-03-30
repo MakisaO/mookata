@@ -16,6 +16,27 @@ body {
 	padding: 30px;
 }
 
+/* Loading Overlay Styles */
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+}
+
+.spinner-grow {
+    width: 3rem;
+    height: 3rem;
+}
+
 .stat-card {
 	border: none;
 	border-radius: 15px;
@@ -51,10 +72,19 @@ body {
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner-grow text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="fw-bold text-primary">กำลังคำนวณยอดขาย...</h5>
+        <p class="text-muted small">กรุณารอสักครู่</p>
+    </div>
+
 	<div class="container">
 		<div class="d-flex justify-content-between align-items-center mb-5">
 			<h2 class="fw-bold"><i class="bi bi-bar-chart-line"></i> สรุปยอดขาย (Sales Summary)</h2>
-			<a th:href="@{/}" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
+			<a href="/" class="btn btn-secondary">🏠 กลับหน้าหลัก</a>
 		</div>
 
 		<div class="row g-4 mb-5">
@@ -144,6 +174,7 @@ body {
         });
 
         async function fetchSummaryData() {
+            const loader = document.getElementById('loadingOverlay');
             try {
                 const response = await fetch('/api/summary');
                 const data = await response.json();
@@ -157,6 +188,15 @@ body {
 
             } catch (error) {
                 console.error('Error fetching summary data:', error);
+                const loaderText = loader.querySelector('h5');
+                loaderText.innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+                loaderText.classList.replace('text-primary', 'text-danger');
+            } finally {
+                // Hide loader with a slight delay for smooth transition
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }, 300);
             }
         }
 
