@@ -25,6 +25,11 @@ public class CouponService {
         return couponRepository.findById(id);
     }
 
+    // 2.2 ดึงคูปองดัวย Code (ใช้ตรวจสอบสถานะ)
+    public Optional<Coupon> getCouponByCode(String code) {
+        return couponRepository.findByCode(code);
+    }
+
     // 3. สร้างคูปองใหม่ (สุ่มรหัสให้เองอัตโนมัติ)
     public Coupon createCoupon(Coupon coupon) {
         // หากไม่มีการระบุ Code มาให้ ระบบจะสุ่มให้ตาม format TSM-XXXXXX
