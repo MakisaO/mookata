@@ -76,7 +76,8 @@ public class HomeController {
     @GetMapping("/promotions/edit/{id}")
     public String promotionEdit() {
         return "promotions/form";
-
+    }
+    
     @GetMapping("/payments/checkout/table/{id}")
     public String paymentCheckout(@PathVariable("id") Integer id, Model model) {
         model.addAttribute("tableId", id);
