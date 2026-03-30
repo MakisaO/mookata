@@ -19,13 +19,49 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-bold"><i class="bi bi-tags"></i> จัดการโปรโมชั่น</h2>
             <div>
-                <a href="/" class="btn btn-outline-secondary me-2">🏠 หน้าหลัก</a>
-                <a href="/promotions/new" class="btn btn-success">+ เพิ่มโปรโมชั่นใหม่</a>
+                <a th:href="@{/}" class="btn btn-outline-secondary me-2">🏠 หน้าหลัก</a>
+                <button type="button" class="btn btn-info me-2 text-white" data-bs-toggle="modal" data-bs-target="#checkCouponModal">
+                    🔍 ตรวจสอบคูปอง
+                </button>
+                <a th:href="@{/promotion/new}" class="btn btn-success">+ เพิ่มโปรโมชั่นใหม่</a>
             </div>
         </div>
 
-        <div id="messageBox"></div>
+        <!-- SEARCH MODAL -->
+        <div class="modal fade" id="checkCouponModal" tabindex="-1" aria-labelledby="checkCouponModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title" id="checkCouponModalLabel"><i class="bi bi-search"></i> ตรวจสอบสถานะคูปอง</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="couponCodeInput" class="form-label fw-bold">ระบุรหัสคูปอง (ตัวอย่าง: TSM-XXXXXX)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="couponCodeInput" placeholder="พิมพ์รหัสที่นี่...">
+                                <button class="btn btn-primary" type="button" id="btnSearchCoupon">🔍 ค้นหา</button>
+                            </div>
+                        </div>
+                        <hr>
+                        <div id="couponResult" class="p-3 border rounded bg-light d-none">
+                            <h6 class="fw-bold mb-2">ผลการตรวจสอบ:</h6>
+                            <p class="mb-1">รหัส: <span id="resCode" class="fw-bold"></span></p>
+                            <p class="mb-1">โปรโมชั่น: <span id="resPromo"></span></p>
+                            <p class="mb-0">สถานะ: <span id="resStatus" class="badge"></span></p>
+                        </div>
+                        <div id="couponError" class="alert alert-danger d-none mt-2">
+                            <i class="bi bi-exclamation-triangle"></i> ไม่พบรหัสคูปองนี้ในระบบ หรือรหัสไม่ถูกต้อง
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div id="promoGrid" class="row g-4">
             <div class="col-12 text-center py-5 text-muted">กำลังโหลดข้อมูล...</div>
         </div>
@@ -161,5 +197,44 @@
         loadPromotions();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.getElementById('btnSearchCoupon').addEventListener('click', function() {
+        const code = document.getElementById('couponCodeInput').value.trim();
+        const resDiv = document.getElementById('couponResult');
+        const errDiv = document.getElementById('couponError');
+        
+        if(!code) return;
+        
+        // ล้างค่าเก่า
+        resDiv.classList.add('d-none');
+        errDiv.classList.add('d-none');
+
+        // เรียก API
+        fetch(`/api/coupons/validate/${code}`)
+            .then(response => {
+                if(!response.ok) throw new Error('Not found');
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('resCode').innerText = data.code;
+                document.getElementById('resPromo').innerText = data.promotion.name;
+                
+                const badge = document.getElementById('resStatus');
+                badge.innerText = data.status;
+                badge.className = 'badge'; // reset
+                
+                // กำหนดสีตามสถานะ
+                if(data.status === 'ACTIVE') badge.classList.add('bg-success');
+                else if(data.status === 'USED') badge.classList.add('bg-danger');
+                else if(data.status === 'EXPIRED') badge.classList.add('bg-warning', 'text-dark');
+                else if(data.status === 'CANCELED') badge.classList.add('bg-secondary');
+                
+                resDiv.classList.remove('d-none');
+            })
+            .catch(error => {
+                errDiv.classList.remove('d-none');
+            });
+    });
+    </script>
 </body>
 </html>
