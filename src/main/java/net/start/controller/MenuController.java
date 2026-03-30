@@ -32,11 +32,11 @@ public class MenuController {
     @Autowired
     private CategoriesService categoriesService;
 
-    // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้าและค้นหา
+    // 1. Read: แสดงรายการเมนูทั้งหมด แบบแบ่งหน้า ค้นหา และกรองตามหมวดหมู่
     @GetMapping({"", "/"})
     public ResponseEntity<Map<String, Object>> listMenu(
             @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "categoryId", required = false) Integer categoryId, // 🌟 เพิ่มการรับค่า categoryId
+            @RequestParam(value = "categoryId", required = false) Integer categoryId, // 🌟 รับค่า categoryId เพื่อกรอง
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "sortField", defaultValue = "productId") String sortField,
             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir) {
@@ -54,6 +54,10 @@ public class MenuController {
         response.put("keyword", keyword);
         response.put("sortField", sortField);
         response.put("sortDir", sortDir);
+
+        // ส่งรายการหมวดหมู่ไปด้วยสำหรับสร้างปุ่มผ่าน UI แบบ JSON
+        response.put("categories", categoriesService.findAll());
+        response.put("activeCategoryId", categoryId);
 
         return ResponseEntity.ok(response);
     }

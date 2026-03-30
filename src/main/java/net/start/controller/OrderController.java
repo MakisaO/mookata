@@ -31,148 +31,154 @@ import net.start.service.TablesService;
 @RequestMapping("/api/orders") // เปลี่ยน Path เป็น /api/orders
 public class OrderController {
 
-    @Autowired
-    private TablesService tablesService;
+	@Autowired
+	private TablesService tablesService;
 
-    @Autowired
-    private ProductService productService;
+	@Autowired
+	private ProductService productService;
 
-    @Autowired
-    private OrdermenuService ordermenuService;
+	@Autowired
+	private OrdermenuService ordermenuService;
 
-    @Autowired
-    private CategoriesService categoriesService;
+	@Autowired
+	private CategoriesService categoriesService; // 🌟 2. Inject CategoriesService
 
-    // สร้าง DTO ภายใน (Inner Class) สำหรับรับค่าตอนบันทึกคำสั่งซื้อเป็น JSON
-    public static class OrderRequest {
-        private Integer tableId;
-        private Map<Integer, Integer> quantities; // Key: productId, Value: quantity
+	// สร้าง DTO ภายใน (Inner Class) สำหรับรับค่าตอนบันทึกคำสั่งซื้อเป็น JSON
+	public static class OrderRequest {
+		private Integer tableId;
+		private Map<Integer, Integer> quantities; // Key: productId, Value: quantity
 
-        public Integer getTableId() {
-            return tableId;
-        }
+		public Integer getTableId() {
+			return tableId;
+		}
 
-        public void setTableId(Integer tableId) {
-            this.tableId = tableId;
-        }
+		public void setTableId(Integer tableId) {
+			this.tableId = tableId;
+		}
 
-        public Map<Integer, Integer> getQuantities() {
-            return quantities;
-        }
+		public Map<Integer, Integer> getQuantities() {
+			return quantities;
+		}
 
-        public void setQuantities(Map<Integer, Integer> quantities) {
-            this.quantities = quantities;
-        }
-    }
+		public void setQuantities(Map<Integer, Integer> quantities) {
+			this.quantities = quantities;
+		}
+	}
 
-    // 1. ดึงข้อมูลสำหรับหน้าฟอร์มสร้างออเดอร์ (โต๊ะทั้งหมด + สินค้าทั้งหมด)
-    @GetMapping("/new")
-    public ResponseEntity<Map<String, Object>> showOrderForm(
-            @RequestParam(value = "categoryId", required = false) Integer categoryId) {
-        List<Tables> tables = tablesService.findAll();
-        List<Product> products = productService.findAvailableByCategoryId(categoryId);
+	// 1. ดึงข้อมูลสำหรับหน้าฟอร์มสร้างออเดอร์ (โต๊ะทั้งหมด + สินค้าทั้งหมด)
+	@GetMapping("/new")
+	public ResponseEntity<Map<String, Object>> showOrderForm(
+			@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+		List<Tables> tables = tablesService.findAll();
+		
+        // 🌟 ดึงสินค้าเฉพาะที่ "พร้อมขาย" และ "ตรงกับหมวดหมู่ที่เลือก" (ถ้าไม่ได้เลือก ดึงทั้งหมด)
+		List<Product> products = productService.findAvailableByCategoryId(categoryId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("tables", tables);
-        response.put("products", products);
+		Map<String, Object> response = new HashMap<>();
+		response.put("tables", tables);
+		response.put("products", products);
         response.put("categories", categoriesService.findAll());
         response.put("activeCategoryId", categoryId);
 
-        return ResponseEntity.ok(response);
-    }
+		return ResponseEntity.ok(response);
+	}
 
-    // 2. ดึงประวัติการสั่งซื้อ (หน้า History)
-    @GetMapping("/history")
-    public ResponseEntity<Map<String, Object>> showOrderHistory(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+	// 2. ดึงประวัติการสั่งซื้อ (หน้า History)
+	@GetMapping("/history")
+	public ResponseEntity<Map<String, Object>> showOrderHistory(
+			@RequestParam(value = "page", defaultValue = "0") int page,
+			@RequestParam(value = "size", defaultValue = "10") int size) {
 
-        Page<Ordermenu> orderPage = ordermenuService.getPaidOrderHistoryPaginated(PageRequest.of(page, size));
-        BigDecimal grandTotal = ordermenuService.calculateTotalRevenue();
+		Page<Ordermenu> orderPage = ordermenuService.getPaidOrderHistoryPaginated(PageRequest.of(page, size));
+		BigDecimal grandTotal = ordermenuService.calculateTotalRevenue();
 
-        // สร้าง Map สำหรับเก็บข้อมูลที่ Group แล้วของทุก Order ในหน้านี้
-        Map<Integer, Map<String, Integer>> summaryMap = orderPage.getContent().stream()
-                .collect(Collectors.toMap(
-                        Ordermenu::getOrderId,
-                        order -> ordermenuService.getGroupedDetails(order)));
+		// สร้าง Map สำหรับเก็บข้อมูลที่ Group แล้วของทุก Order ในหน้านี้
+		Map<Integer, Map<String, Integer>> summaryMap = orderPage.getContent().stream()
+				.collect(Collectors.toMap(
+						Ordermenu::getOrderId,
+						order -> ordermenuService.getGroupedDetails(order)));
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("orders", orderPage.getContent());
-        response.put("currentPage", page);
-        response.put("totalPages", orderPage.getTotalPages());
-        response.put("totalItems", orderPage.getTotalElements());
-        response.put("pageSize", size);
-        response.put("grandTotal", grandTotal);
-        response.put("summaryMap", summaryMap);
+		Map<String, Object> response = new HashMap<>();
+		response.put("orders", orderPage.getContent());
+		response.put("currentPage", page);
+		response.put("totalPages", orderPage.getTotalPages());
+		response.put("totalItems", orderPage.getTotalElements());
+		response.put("pageSize", size);
+		response.put("grandTotal", grandTotal);
+		response.put("summaryMap", summaryMap);
 
-        return ResponseEntity.ok(response);
-    }
+		return ResponseEntity.ok(response);
+	}
 
-    // 3. ดูรายละเอียดของออเดอร์ที่เคยสั่ง (ผ่าน ID)
-    @GetMapping("/history/{id}")
-    public ResponseEntity<Map<String, Object>> showOrderDetail(@PathVariable("id") Integer id) {
-        Ordermenu order = ordermenuService.findById(id);
-        if (order == null) {
-            return ResponseEntity.notFound().build();
-        }
+	// 3. ดูรายละเอียดของออเดอร์ที่เคยสั่ง (ผ่าน ID)
+	@GetMapping("/history/{id}")
+	public ResponseEntity<Map<String, Object>> showOrderDetail(@PathVariable("id") Integer id) {
+		Ordermenu order = ordermenuService.findById(id);
+		if (order == null) {
+			return ResponseEntity.notFound().build();
+		}
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("order", order);
-        response.put("groupedDetails", ordermenuService.getGroupedDetails(order));
+		Map<String, Object> response = new HashMap<>();
+		response.put("order", order);
+		response.put("groupedDetails", ordermenuService.getGroupedDetails(order));
 
-        return ResponseEntity.ok(response);
-    }
+		return ResponseEntity.ok(response);
+	}
 
-    // 4. ดึงข้อมูลประวัติและสินค้าของโต๊ะที่จะสั่งอาหาร
-    @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> showOrderFormByTable(
-            @PathVariable("id") Integer id,
-            @RequestParam(value = "categoryId", required = false) Integer categoryId) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("selectedTableId", id);
-        response.put("products", productService.findAvailableByCategoryId(categoryId));
-        response.put("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
+	// 4. ดึงข้อมูลประวัติและสินค้าของโต๊ะที่จะสั่งอาหาร
+	@GetMapping("/{id}")
+	public ResponseEntity<Map<String, Object>> showOrderFormByTable(
+			@PathVariable("id") Integer id,
+			@RequestParam(value = "categoryId", required = false) Integer categoryId) {
+		Map<String, Object> response = new HashMap<>();
+		response.put("selectedTableId", id);
+		
+        // 🌟 ดึงสินค้าเฉพาะที่ "พร้อมขาย" และ "ตรงกับหมวดหมู่ที่เลือก"
+		response.put("products", productService.findAvailableByCategoryId(categoryId));
+		response.put("aggregatedOrders", ordermenuService.getAggregatedActiveOrders(id));
+        
+        // 🌟 ส่งข้อมูลหมวดหมู่เพื่อไปสร้างปุ่มผ่าน UI แบบ JSON
         response.put("categories", categoriesService.findAll());
         response.put("activeCategoryId", categoryId);
 
-        return ResponseEntity.ok(response);
-    }
+		return ResponseEntity.ok(response);
+	}
 
-    // 5. บันทึกคำสั่งซื้อ
-    @PostMapping("/save")
-    public ResponseEntity<Map<String, Object>> saveOrder(@RequestBody OrderRequest orderRequest) {
-        Map<String, Object> response = new HashMap<>();
+	// 5. บันทึกคำสั่งซื้อ
+	@PostMapping("/save")
+	public ResponseEntity<Map<String, Object>> saveOrder(@RequestBody OrderRequest orderRequest) {
+		Map<String, Object> response = new HashMap<>();
 
-        if (orderRequest.getTableId() == null || orderRequest.getQuantities() == null
-                || orderRequest.getQuantities().isEmpty()) {
-            response.put("success", false);
-            response.put("message", "ข้อมูลคำสั่งซื้อไม่ถูกต้อง");
-            return ResponseEntity.badRequest().body(response);
-        }
+		if (orderRequest.getTableId() == null || orderRequest.getQuantities() == null
+				|| orderRequest.getQuantities().isEmpty()) {
+			response.put("success", false);
+			response.put("message", "ข้อมูลคำสั่งซื้อไม่ถูกต้อง");
+			return ResponseEntity.badRequest().body(response);
+		}
 
-        // คัดมาเฉพาะสินค้าที่เลือกจำนวนมากกว่า 0
-        Map<Integer, Integer> validQuantities = new LinkedHashMap<>();
-        for (Map.Entry<Integer, Integer> entry : orderRequest.getQuantities().entrySet()) {
-            if (entry.getValue() > 0) {
-                validQuantities.put(entry.getKey(), entry.getValue());
-            }
-        }
+		// คัดมาเฉพาะสินค้าที่เลือกจำนวนมากกว่า 0
+		Map<Integer, Integer> validQuantities = new LinkedHashMap<>();
+		for (Map.Entry<Integer, Integer> entry : orderRequest.getQuantities().entrySet()) {
+			if (entry.getValue() > 0) {
+				validQuantities.put(entry.getKey(), entry.getValue());
+			}
+		}
 
-        if (validQuantities.isEmpty()) {
-            response.put("success", false);
-            response.put("message", "กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ");
-            return ResponseEntity.badRequest().body(response);
-        }
+		if (validQuantities.isEmpty()) {
+			response.put("success", false);
+			response.put("message", "กรุณาระบุจำนวนสินค้าอย่างน้อย 1 รายการ");
+			return ResponseEntity.badRequest().body(response);
+		}
 
-        try {
-            ordermenuService.createOrder(orderRequest.getTableId(), validQuantities);
-            response.put("success", true);
-            response.put("message", "บันทึกคำสั่งซื้อเรียบร้อยแล้ว");
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException ex) {
-            response.put("success", false);
-            response.put("message", ex.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
+		try {
+			ordermenuService.createOrder(orderRequest.getTableId(), validQuantities);
+			response.put("success", true);
+			response.put("message", "บันทึกคำสั่งซื้อเรียบร้อยแล้ว");
+			return ResponseEntity.ok(response);
+		} catch (IllegalArgumentException ex) {
+			response.put("success", false);
+			response.put("message", ex.getMessage());
+			return ResponseEntity.badRequest().body(response);
+		}
+	}
 }

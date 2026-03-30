@@ -98,9 +98,7 @@
                     <a href="/tables/edit/${table.tableId}" class="btn btn-edit">⚙️ จัดการสถานะ</a>
                     ${showPaymentActions ? `
                         <a href="/payments/checkout/table/${table.tableId}" class="btn btn-success">💳 ชำระเงิน</a>
-                        <form action="/payments/reset/${table.tableId}" method="post" style="margin: 0;">
-                            <button type="submit" class="btn btn-reset" onclick="return confirm('ยืนยันการคืนโต๊ะ? (ใช้สำหรับกรณีที่ไม่มีรายการอาหาร หรือต้องการรีเซ็ตสถานะ)')">🔄 คืนโต๊ะว่าง</button>
-                        </form>
+                        <button type="button" class="btn btn-reset" onclick="resetTable(${table.tableId})" style="margin-top: 5px;">🔄 คืนโต๊ะว่าง</button>
                     ` : ''}
                     ${canDelete
                         ? `<button type="button" class="btn btn-delete" data-delete-id="${table.tableId}">🗑️ ลบโต๊ะ</button>`
@@ -169,6 +167,25 @@
                 showMessage('error', error.message);
             }
         });
+
+        async function resetTable(id) {
+            if (!confirm('ยืนยันการคืนโต๊ะ? (ใช้สำหรับกรณีที่ไม่มีรายการอาหาร หรือต้องการรีเซ็ตสถานะ)')) {
+                return;
+            }
+            try {
+                const response = await fetch('/api/payments/reset/' + id, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    throw new Error('ไม่สามารถคืนโต๊ะว่างได้');
+                }
+                const result = await response.json();
+                showMessage('success', result.message || 'คืนโต๊ะว่างสำเร็จแล้ว');
+                await loadTables();
+            } catch (error) {
+                showMessage('error', error.message);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', loadTables);
     </script>
