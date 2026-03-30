@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -42,7 +43,7 @@ public class Product implements java.io.Serializable {
 	@Column(name = "product_status")
 	private String productStatus;
 
-	@JsonIgnore
+	@JsonManagedReference(value="product-details")
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 	private List<OrderDetail> orderDetails = new ArrayList<>();
 
