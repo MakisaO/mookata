@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>จัดการคูปอง - Mookata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                <i class="fa-solid fa-ticket mr-3 text-indigo-600"></i> จัดการคูปอง (Coupon Management)
+            </h2>
+            <div class="flex gap-2">
+                <a href="/promotions" class="bg-white hover:bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-medium border border-slate-200 transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-tags"></i> จัดการโปรโมชั่น
+                </a>
+                <a href="/" class="bg-white hover:bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-medium border border-slate-200 transition-colors shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-house"></i> หน้าหลัก
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Search Bar -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                    <input type="text" id="searchInput" placeholder="ค้นหารหัสคูปอง (TSM-XXXXXX)..." 
+                           class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-all text-sm">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="relative">
+                    <i class="fa-solid fa-filter absolute left-3 top-3 text-slate-400"></i>
+                    <select id="statusFilter" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-all text-sm appearance-none">
+                        <option value="">ทุกสถานะ (All Status)</option>
+                        <option value="ACTIVE">พร้อมใช้งาน (ACTIVE)</option>
+                        <option value="USED">ใช้งานแล้ว (USED)</option>
+                        <option value="EXPIRED">หมดอายุ (EXPIRED)</option>
+                        <option value="CANCELED">ยกเลิก (CANCELED)</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="resetFilters()" class="text-slate-500 hover:text-indigo-600 text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> ล้างการกรอง
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coupon Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-bottom border-slate-100">
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">รหัสคูปอง (Code)</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">โปรโมชั่น (Promotion)</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ (Status)</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">จัดการ (Actions)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="couponTableBody" class="divide-y divide-slate-100">
+                        <!-- Content loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="hidden py-12 text-center">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-600 mb-2"></i>
+                <p class="text-slate-500 text-sm">กำลังโหลดข้อมูล...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-20 text-center">
+                <i class="fa-solid fa-ticket text-6xl text-slate-100 mb-4"></i>
+                <p class="text-slate-500 font-medium">ไม่พบรหัสคูปองที่ตรงตามเงื่อนไข</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <div class="text-sm text-slate-500">
+                    แสดงทั้งหมด <span id="totalItems" class="font-bold text-slate-800">0</span> รายการ
+                </div>
+                <div class="flex gap-2" id="paginationControls">
+                    <!-- Buttons loaded via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let pageSize = 10;
+        let currentSearch = '';
+        let currentStatus = '';
+
+        const API_BASE = '/api/coupons';
+
+        async function fetchCoupons() {
+            const tbody = document.getElementById('couponTableBody');
+            const spinner = document.getElementById('loadingSpinner');
+            const empty = document.getElementById('emptyState');
+            
+            tbody.innerHTML = '';
+            spinner.classList.remove('hidden');
+            empty.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/search?code=${currentSearch}&status=${currentStatus}&page=${currentPage}&size=${pageSize}`);
+                const data = await response.json();
+                
+                spinner.classList.add('hidden');
+                
+                if (data.coupons.length === 0) {
+                    empty.classList.remove('hidden');
+                } else {
+                    data.coupons.forEach(coupon => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-slate-50 transition-colors';
+                        row.innerHTML = `
+                            <td class="px-6 py-4">
+                                <span class="font-mono font-bold text-slate-700">${coupon.code}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-slate-800">${coupon.promotion ? coupon.promotion.name : 'N/A'}</div>
+                                <div class="text-xs text-slate-400">${coupon.promotion ? coupon.promotion.type : ''}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                ${getStatusBadge(coupon.status)}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    ${coupon.status === 'ACTIVE' ? `
+                                        <button onclick="updateStatus('${coupon.code}', 'USED')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="ทำเครื่องหมายว่าใช้แล้ว">
+                                            <i class="fa-solid fa-check-to-slot"></i>
+                                        </button>
+                                        <button onclick="updateStatus('${coupon.code}', 'CANCELED')" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="ยกเลิกคูปอง">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </button>
+                                    ` : `
+                                        <button onclick="updateStatus('${coupon.code}', 'ACTIVE')" class="text-xs text-indigo-600 hover:underline" title="เปิดใช้งานใหม่">
+                                            เปิดใช้งานใหม่
+                                        </button>
+                                    `}
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                updatePagination(data.totalPages, data.currentPage);
+                document.getElementById('totalItems').innerText = data.totalItems;
+
+            } catch (error) {
+                console.error('Error fetching coupons:', error);
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function getStatusBadge(status) {
+            const base = "px-2.5 py-0.5 rounded-full text-xs font-bold uppercase ";
+            switch(status) {
+                case 'ACTIVE': return `<span class="${base} bg-green-100 text-green-700">พร้อมใช้งาน</span>`;
+                case 'USED': return `<span class="${base} bg-blue-100 text-blue-700">ใช้งานแล้ว</span>`;
+                case 'EXPIRED': return `<span class="${base} bg-amber-100 text-amber-700">หมดอายุ</span>`;
+                case 'CANCELED': return `<span class="${base} bg-slate-100 text-slate-700">ยกเลิก</span>`;
+                default: return `<span class="${base} bg-slate-100 text-slate-500">${status}</span>`;
+            }
+        }
+
+        function updatePagination(totalPages, current) {
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Previous
+            const prev = createPagerBtn('<i class="fa-solid fa-chevron-left"></i>', current > 0, () => {
+                currentPage = current - 1;
+                fetchCoupons();
+            });
+            controls.appendChild(prev);
+
+            // Simple pagination info
+            const info = document.createElement('span');
+            info.className = 'px-4 py-2 text-sm text-slate-600 self-center';
+            info.innerText = `หน้า ${current + 1} จาก ${totalPages}`;
+            controls.appendChild(info);
+
+            // Next
+            const next = createPagerBtn('<i class="fa-solid fa-chevron-right"></i>', current < totalPages - 1, () => {
+                currentPage = current + 1;
+                fetchCoupons();
+            });
+            controls.appendChild(next);
+        }
+
+        function createPagerBtn(html, enabled, onClick) {
+            const btn = document.createElement('button');
+            btn.innerHTML = html;
+            btn.className = `px-3 py-2 rounded-lg border text-sm font-medium transition-all ${enabled ? 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200' : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'}`;
+            if (enabled) btn.onclick = onClick;
+            return btn;
+        }
+
+        async function updateStatus(code, status) {
+            if (!confirm(`ต้องการเปลี่ยนสถานะคูปอง ${code} เป็น ${status} ใช่หรือไม่?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/status/${code}/${status}`, { method: 'POST' });
+                if (response.ok) {
+                    fetchCoupons();
+                } else {
+                    alert('ไม่สามารถอัปเดตสถานะได้');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            currentSearch = '';
+            currentStatus = '';
+            currentPage = 0;
+            fetchCoupons();
+        }
+
+        // Event Listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearch = e.target.value.trim();
+            currentPage = 0;
+            fetchCoupons();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            currentStatus = e.target.value;
+            currentPage = 0;
+            fetchCoupons();
+        });
+
+        // Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const searchParam = params.get('search');
+            if (searchParam) {
+                currentSearch = searchParam;
+                document.getElementById('searchInput').value = searchParam;
+            }
+            fetchCoupons();
+        });
+    </script>
+</body>
+</html>

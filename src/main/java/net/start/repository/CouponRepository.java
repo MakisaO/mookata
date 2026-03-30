@@ -15,4 +15,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     
     // เพิ่ม Method สำหรับเช็คว่ามี Code นี้อยู่หรือยัง
     boolean existsByCode(String code);
+
+    org.springframework.data.domain.Page<Coupon> findByCodeContainingAndStatusContaining(String code, String status, org.springframework.data.domain.Pageable pageable);
 }
