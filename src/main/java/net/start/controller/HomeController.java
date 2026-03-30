@@ -61,4 +61,19 @@ public class HomeController {
     public String tablesEdit() {
         return "tables/form";
     }
+    
+    @GetMapping("/promotions")
+    public String promotions() {
+        return "promotions/list";
+    }
+
+    @GetMapping("/promotions/new")
+    public String promotionNew() {
+        return "promotions/form";
+    }
+
+    @GetMapping("/promotions/edit/{id}")
+    public String promotionEdit() {
+        return "promotions/form";
+    }
 }

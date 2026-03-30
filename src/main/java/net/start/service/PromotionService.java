@@ -19,15 +19,15 @@ public class PromotionService {
     }
 
     public Promotion findById(int id) {
-        return promotionRepository.findById(id).orElseThrow();
+        return promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Promotion not found"));
     }
 
-    public void save(Promotion promotion) {
-        promotionRepository.save(promotion);
+    public Promotion save(Promotion promotion) {
+        return promotionRepository.save(promotion);
     }
 
     public void deleteById(int id) {
         promotionRepository.deleteById(id);
     }
-
 }

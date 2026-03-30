@@ -1,4 +1,4 @@
-package net.start.controller;
+/*package net.start.controller;
 
 import java.util.List;
 
@@ -30,4 +30,4 @@ public class PromotionApi {
         return new ResponseEntity<Promotion>(promotionService.findById(id), HttpStatus.OK);
     }
 
-}
+}*/

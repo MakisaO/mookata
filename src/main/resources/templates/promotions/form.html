@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ฟอร์มโปรโมชั่น - Mookata</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -13,44 +14,42 @@
 </head>
 <body>
     <div class="container">
-        <h2 class="fw-bold mb-4" th:text="${promotion.promotionId == null ? '➕ เพิ่มโปรโมชั่นใหม่' : '⚙️ แก้ไขโปรโมชั่น'}"></h2>
+        <h2 class="fw-bold mb-4" id="pageTitle">➕ เพิ่มโปรโมชั่นใหม่</h2>
         <hr>
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <span th:text="${errorMessage}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <div id="messageBox"></div>
 
-        <form th:action="${promotion.promotionId == null ? '/promotion/save' : '/promotion/update/' + promotion.promotionId}" 
-              th:object="${promotion}" method="post">
-            
-            <!-- Hidden ID field for updates -->
-            <input type="hidden" th:field="*{promotionId}">
+        <form id="promotionForm">
+            <input type="hidden" id="promotionId">
 
             <div class="row mb-4">
                 <div class="col-md-12 mb-3">
                     <label class="form-label fw-bold">ชื่อโปรโมชั่น</label>
-                    <input type="text" th:field="*{name}" class="form-control" required placeholder="เช่น ลด 100 บาท เมื่อซื้อครบ 500">
+                    <input type="text" id="name" class="form-control" required placeholder="เช่น ลด 100 บาท เมื่อซื้อครบ 500">
                 </div>
+
                 <div class="col-md-12 mb-3">
                     <label class="form-label fw-bold">รายละเอียด</label>
-                    <textarea th:field="*{detail}" class="form-control" rows="2" placeholder="รายละเอียดเพิ่มเติมของโปรโมชั่นนี้..."></textarea>
+                    <textarea id="detail" class="form-control" rows="2" placeholder="รายละเอียดเพิ่มเติมของโปรโมชั่นนี้..."></textarea>
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">ประเภท</label>
-                    <select th:field="*{type}" class="form-select" required>
+                    <select id="type" class="form-select" required>
                         <option value="percent">ส่วนลด % (percent)</option>
                         <option value="baht">ส่วนลดบาท (baht)</option>
                         <option value="add">แถมสินค้า (add)</option>
                     </select>
                 </div>
+
                 <div class="col-md-3 mb-3">
                     <label class="form-label fw-bold">วันที่เริ่ม</label>
-                    <input type="datetime-local" th:field="*{startDate}" class="form-control" required>
+                    <input type="datetime-local" id="startDate" class="form-control" required>
                 </div>
+
                 <div class="col-md-3 mb-3">
                     <label class="form-label fw-bold">วันที่สิ้นสุด</label>
-                    <input type="datetime-local" th:field="*{endDate}" class="form-control" required>
+                    <input type="datetime-local" id="endDate" class="form-control" required>
                 </div>
             </div>
 
@@ -58,23 +57,21 @@
                 <div class="col-12">
                     <h5 class="section-title">🎁 รางวัล / ส่วนลด (Reward)</h5>
                 </div>
+
                 <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">มูลค่าส่วนลด (บาท)</label>
-                    <input type="number" step="0.01" min="0" th:field="*{value}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลดบาท">
+                    <label class="form-label fw-bold">มูลค่าส่วนลด</label>
+                    <input type="number" step="0.01" min="0" id="value" class="form-control" placeholder="ใช้กับส่วนลดบาทหรือเปอร์เซ็นต์">
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">มูลค่าส่วนลด (%)</label>
-                    <input type="number" step="0.01" min="0" th:field="*{percent}" class="form-control" placeholder="ใช้สำหรับประเภทส่วนลด %">
-                </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">จำนวนสินค้าที่แถม</label>
-                    <input type="number" min="0" th:field="*{quantity}" class="form-control" placeholder="เช่น 1">
+                    <input type="number" min="0" id="quantity" class="form-control" placeholder="เช่น 1">
                 </div>
+
                 <div class="col-md-12 mb-3">
                     <label class="form-label fw-bold">สินค้าที่แถมฟรี</label>
-                    <select th:field="*{freeProduct}" class="form-select">
+                    <select id="freeProduct" class="form-select">
                         <option value="">-- ไม่มีการแถมสินค้า --</option>
-                        <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productName}"></option>
                     </select>
                 </div>
             </div>
@@ -83,28 +80,155 @@
                 <div class="col-12">
                     <h5 class="section-title">⚖️ เงื่อนไข (Condition)</h5>
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">ซื้อขั้นต่ำ (บาท)</label>
-                    <input type="number" step="0.01" min="0" th:field="*{minspend}" class="form-control" placeholder="0.00">
+                    <input type="number" step="0.01" min="0" id="minspend" class="form-control" placeholder="0.00">
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-bold">จำนวนสินค้าที่ต้องซื้อ</label>
-                    <input type="number" min="0" th:field="*{reqQuantity}" class="form-control" placeholder="เช่น 3">
+                    <input type="number" min="0" id="reqQuantity" class="form-control" placeholder="เช่น 3">
                 </div>
+
                 <div class="col-md-12 mb-3">
-                    <label class="form-label fw-bold">สินค้าที่ต้องซื้อ (สำหรับโปร Buy X Get Y)</label>
-                    <select th:field="*{reqProduct}" class="form-select">
+                    <label class="form-label fw-bold">สินค้าที่ต้องซื้อ</label>
+                    <select id="reqProduct" class="form-select">
                         <option value="">-- ไม่ระบุสินค้าเฉพาะเจาะจง --</option>
-                        <option th:each="p : ${products}" th:value="${p.productId}" th:text="${p.productName}"></option>
                     </select>
                 </div>
             </div>
 
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary px-5">💾 บันทึกโปรโมชั่น</button>
-                <a th:href="@{/promotion}" class="btn btn-outline-secondary px-5">ยกเลิก</a>
+                <a href="/promotions" class="btn btn-outline-secondary px-5">ยกเลิก</a>
             </div>
         </form>
     </div>
+
+    <script>
+        const pathParts = window.location.pathname.split('/');
+        const isEdit = pathParts.includes('edit');
+        const promotionId = isEdit ? pathParts[pathParts.length - 1] : null;
+
+        const pageTitle = document.getElementById('pageTitle');
+        const messageBox = document.getElementById('messageBox');
+
+        if (isEdit) {
+            pageTitle.textContent = '⚙️ แก้ไขโปรโมชั่น';
+        }
+
+        function showMessage(message, type = 'danger') {
+            messageBox.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show mb-4" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        function toLocalDateTime(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            const offset = date.getTimezoneOffset();
+            const localDate = new Date(date.getTime() - offset * 60000);
+            return localDate.toISOString().slice(0, 16);
+        }
+
+        async function loadProducts() {
+            const response = await fetch('/api/products');
+            if (!response.ok) throw new Error('โหลดสินค้าไม่สำเร็จ');
+
+            const products = await response.json();
+            const options = [
+                '<option value="">-- ไม่มีการแถมสินค้า --</option>',
+                ...products.map(p => `<option value="${p.productId}">${p.productName}</option>`)
+            ].join('');
+
+            document.getElementById('freeProduct').innerHTML = options;
+            document.getElementById('reqProduct').innerHTML =
+                '<option value="">-- ไม่ระบุสินค้าเฉพาะเจาะจง --</option>' +
+                products.map(p => `<option value="${p.productId}">${p.productName}</option>`).join('');
+        }
+
+        async function loadPromotion() {
+            if (!promotionId) return;
+
+            const response = await fetch(`/api/promotions/${promotionId}`);
+            if (!response.ok) throw new Error('โหลดข้อมูลโปรโมชั่นไม่สำเร็จ');
+
+            const promo = await response.json();
+
+            document.getElementById('promotionId').value = promo.promotionId ?? '';
+            document.getElementById('name').value = promo.name ?? '';
+            document.getElementById('detail').value = promo.detail ?? '';
+            document.getElementById('type').value = promo.type ?? '';
+            document.getElementById('startDate').value = toLocalDateTime(promo.startDate);
+            document.getElementById('endDate').value = toLocalDateTime(promo.endDate);
+            document.getElementById('value').value = promo.value ?? '';
+            document.getElementById('quantity').value = promo.quantity ?? '';
+            document.getElementById('minspend').value = promo.minspend ?? '';
+            document.getElementById('reqQuantity').value = promo.reqQuantity ?? '';
+            document.getElementById('freeProduct').value = promo.freeProduct ? promo.freeProduct.productId : '';
+            document.getElementById('reqProduct').value = promo.reqProduct ? promo.reqProduct.productId : '';
+        }
+
+        function buildBody() {
+            return {
+                promotionId: promotionId ? Number(promotionId) : null,
+                name: document.getElementById('name').value.trim(),
+                detail: document.getElementById('detail').value.trim(),
+                type: document.getElementById('type').value,
+                startDate: document.getElementById('startDate').value || null,
+                endDate: document.getElementById('endDate').value || null,
+                value: document.getElementById('value').value || null,
+                quantity: document.getElementById('quantity').value || null,
+                minspend: document.getElementById('minspend').value || null,
+                reqQuantity: document.getElementById('reqQuantity').value || null,
+                freeProduct: document.getElementById('freeProduct').value
+                    ? { productId: Number(document.getElementById('freeProduct').value) }
+                    : null,
+                reqProduct: document.getElementById('reqProduct').value
+                    ? { productId: Number(document.getElementById('reqProduct').value) }
+                    : null
+            };
+        }
+
+        document.getElementById('promotionForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            try {
+                const body = buildBody();
+
+                const response = await fetch(
+                    promotionId ? `/api/promotions/${promotionId}` : '/api/promotions',
+                    {
+                        method: promotionId ? 'PUT' : 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    }
+                );
+
+                if (!response.ok) throw new Error('บันทึกโปรโมชั่นไม่สำเร็จ');
+
+                window.location.href = '/promotions';
+            } catch (error) {
+                showMessage(error.message || 'เกิดข้อผิดพลาด');
+            }
+        });
+
+        async function initPage() {
+            try {
+                await loadProducts();
+                await loadPromotion();
+            } catch (error) {
+                showMessage(error.message || 'เกิดข้อผิดพลาด');
+            }
+        }
+
+        initPage();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
