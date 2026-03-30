@@ -2,15 +2,19 @@ package net.start.controller;
 
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +23,9 @@ import net.start.model.OrderDetail;
 import net.start.model.Ordermenu;
 import net.start.repository.OrderDetailRepository;
 
-@Controller
-@RequestMapping("/kitchen")
+@RestController
+@RequestMapping("/api/kitchen") // แนะนำให้เติม /api เพื่อแยกกับ Route ของ Frontend
+@CrossOrigin(origins = "*")
 public class KitchenController {
 
     private static final Logger logger = LoggerFactory.getLogger(KitchenController.class);
@@ -28,63 +33,86 @@ public class KitchenController {
     @Autowired
     private OrderDetailRepository orderDetailRepository;
 
-    @GetMapping("")
-    public String viewKitchenDashboard(Model model) {
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String, Object>> viewKitchenDashboard() {
         // Fetch items that are ordered or cooking
         List<OrderDetail> pendingItems = orderDetailRepository.findByItemStatusInOrderByDetailIdAsc(List.of("ordered", "cooking"));
         
         // Group by Ordermenu (each round)
-        java.util.Map<Ordermenu, List<OrderDetail>> groupedOrders = pendingItems.stream()
+        Map<Ordermenu, List<OrderDetail>> groupedOrders = pendingItems.stream()
                 .collect(Collectors.groupingBy(OrderDetail::getOrdermenu, 
                          LinkedHashMap::new, Collectors.toList()));
 
-        // Calculate mass action labels for each order round
-        java.util.Map<Integer, String> massActionLabels = new java.util.HashMap<>();
-        for (java.util.Map.Entry<Ordermenu, List<OrderDetail>> entry : groupedOrders.entrySet()) {
+        // Prepare response list for JSON serialization
+        List<Map<String, Object>> roundsData = new ArrayList<>();
+
+        for (Map.Entry<Ordermenu, List<OrderDetail>> entry : groupedOrders.entrySet()) {
+            Ordermenu ordermenu = entry.getKey();
             List<OrderDetail> items = entry.getValue();
+            
             boolean hasOrdered = items.stream().anyMatch(i -> "ordered".equals(i.getItemStatus()));
             boolean allOrdered = items.stream().allMatch(i -> "ordered".equals(i.getItemStatus()));
             
+            String massActionLabel;
             if (allOrdered) {
-                massActionLabels.put(entry.getKey().getOrderId(), "👨‍🍳 เริ่มทำทั้งหมด");
+                massActionLabel = "👨‍🍳 เริ่มทำทั้งหมด";
             } else if (hasOrdered) {
-                massActionLabels.put(entry.getKey().getOrderId(), "⏩ ปรับเป็นกำลังทำทั้งหมด");
+                massActionLabel = "⏩ ปรับเป็นกำลังทำทั้งหมด";
             } else {
-                massActionLabels.put(entry.getKey().getOrderId(), "🛎️ เสิร์ฟทั้งหมด");
+                massActionLabel = "🛎️ เสิร์ฟทั้งหมด";
             }
+
+            // จัด โครงสร้างใหม่ให้อ่านง่ายเมื่อแปลงเป็น JSON
+            Map<String, Object> roundInfo = new HashMap<>();
+            roundInfo.put("orderMenu", ordermenu);
+            roundInfo.put("items", items);
+            roundInfo.put("massActionLabel", massActionLabel);
+            
+            roundsData.add(roundInfo);
         }
                          
-        model.addAttribute("pendingItems", pendingItems);
-        model.addAttribute("groupedOrders", groupedOrders);
-        model.addAttribute("massActionLabels", massActionLabels);
-        return "kitchen/dashboard";
+        Map<String, Object> response = new HashMap<>();
+        response.put("pendingItemsCount", pendingItems.size());
+        response.put("rounds", roundsData);
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/cook/{id}")
+    @PutMapping("/cook/{id}")
     @Transactional
-    public String markCooking(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, String>> markCooking(@PathVariable("id") Integer id) {
         OrderDetail detail = orderDetailRepository.findById(id).orElseThrow();
         logger.info("Kitchen: Starting to cook detail ID: {}, current status: {}", id, detail.getItemStatus());
+        
         detail.setItemStatus("cooking");
         orderDetailRepository.save(detail);
-        redirectAttributes.addFlashAttribute("successMessage", "สถานะ: กำลังทำ");
-        return "redirect:/kitchen";
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "สถานะ: กำลังทำ",
+            "updatedId", String.valueOf(id)
+        ));
     }
 
-    @GetMapping("/serve/{id}")
+    @PutMapping("/serve/{id}")
     @Transactional
-    public String markServed(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, String>> markServed(@PathVariable("id") Integer id) {
         OrderDetail detail = orderDetailRepository.findById(id).orElseThrow();
         logger.info("Kitchen: Serving detail ID: {}, current status: {}", id, detail.getItemStatus());
+        
         detail.setItemStatus("served");
         orderDetailRepository.save(detail);
-        redirectAttributes.addFlashAttribute("successMessage", "สถานะ: เสิร์ฟแล้ว");
-        return "redirect:/kitchen";
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "สถานะ: เสิร์ฟแล้ว",
+            "updatedId", String.valueOf(id)
+        ));
     }
 
-    @GetMapping("/mass-update/{orderId}")
+    @PutMapping("/mass-update/{orderId}")
     @Transactional
-    public String massUpdateRound(@PathVariable("orderId") Integer orderId, RedirectAttributes redirectAttributes) {
+    public ResponseEntity<Map<String, Object>> massUpdateRound(@PathVariable("orderId") Integer orderId) {
         // Fetch only pending items for this specific order round
         List<OrderDetail> items = orderDetailRepository.findByItemStatusInOrderByDetailIdAsc(List.of("ordered", "cooking"))
                 .stream()
@@ -92,7 +120,10 @@ public class KitchenController {
                 .collect(Collectors.toList());
 
         if (items.isEmpty()) {
-            return "redirect:/kitchen";
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error", 
+                "message", "ไม่พบรายการที่ต้องอัปเดต"
+            ));
         }
 
         boolean hasOrdered = items.stream().anyMatch(i -> "ordered".equals(i.getItemStatus()));
@@ -101,20 +132,22 @@ public class KitchenController {
         String message;
 
         if (hasOrdered) {
-            // If there's anything "ordered", the mass action is to move to "cooking"
-            // This applies even if some are already "cooking" (brings the "ordered" ones up to "cooking")
             targetStatus = "cooking";
             message = "อัปเดตรายการทั้งหมดเป็น: กำลังทำ";
             items.stream().filter(i -> "ordered".equals(i.getItemStatus())).forEach(i -> i.setItemStatus(targetStatus));
         } else {
-            // If nothing is "ordered" (all are "cooking"), move everything to "served"
             targetStatus = "served";
             message = "อัปเดตรายการทั้งหมดเป็น: เสิร์ฟแล้ว";
             items.forEach(i -> i.setItemStatus(targetStatus));
         }
 
         orderDetailRepository.saveAll(items);
-        redirectAttributes.addFlashAttribute("successMessage", message);
-        return "redirect:/kitchen";
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", message,
+            "updatedCount", items.size(),
+            "newStatus", targetStatus
+        ));
     }
 }

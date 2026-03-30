@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <title>ฟอร์มจัดการโต๊ะ</title>
@@ -79,24 +79,45 @@
         .btn-back {
             background: #6c757d;
         }
+
+        .alert {
+            width: min(420px, 100%);
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
     <div class="page">
-        <h1 th:text="${table.tableId == null ? 'เพิ่มโต๊ะใหม่' : 'แก้ไขสถานะโต๊ะ'}">ฟอร์มจัดการโต๊ะ</h1>
+        <h1 id="pageTitle">ฟอร์มจัดการโต๊ะ</h1>
+        <div id="messageBox" class="alert" style="display: none;"></div>
 
         <div class="card">
-            <form th:action="${table.tableId == null ? '/tables/save' : '/tables/update/' + table.tableId}"
-                  th:object="${table}" method="post">
-
-                <div class="form-group" th:if="${table.tableId != null}">
-                    <label>รหัสโต๊ะ</label>
-                    <input type="text" th:field="*{tableId}" readonly style="background: #eee;">
+            <form id="tableForm">
+                <div class="form-group" id="tableIdGroup" style="display: none;">
+                    <label for="tableId">รหัสโต๊ะ</label>
+                    <input type="text" id="tableId" readonly style="background: #eee;">
                 </div>
 
                 <div class="form-group">
-                    <label>สถานะ</label>
-                    <select th:field="*{status}" required>
+                    <label for="status">สถานะ</label>
+                    <select id="status" required>
                         <option value="">เลือกสถานะ</option>
                         <option value="available">ว่าง</option>
                         <option value="unavailable">กำลังใช้งาน</option>
@@ -106,12 +127,109 @@
                 </div>
 
                 <div class="actions">
-                    <button type="submit" class="btn">บันทึก</button>
-                    <a th:href="@{/tables}" class="btn btn-cancel">ยกเลิก</a>
-                    <a th:href="@{/}" class="btn btn-back">ย้อนกลับ</a>
+                    <button type="submit" class="btn" id="submitButton">บันทึก</button>
+                    <a href="/tables" class="btn btn-cancel">ยกเลิก</a>
+                    <a href="/" class="btn btn-back">ย้อนกลับ</a>
                 </div>
             </form>
         </div>
     </div>
+
+    <script>
+        const TABLES_API = '/api/tables';
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const isEditMode = pathParts.includes('edit');
+        const tableId = isEditMode ? pathParts[pathParts.length - 1] : null;
+
+        const pageTitle = document.getElementById('pageTitle');
+        const tableIdGroup = document.getElementById('tableIdGroup');
+        const tableIdInput = document.getElementById('tableId');
+        const statusInput = document.getElementById('status');
+        const messageBox = document.getElementById('messageBox');
+        const tableForm = document.getElementById('tableForm');
+        const submitButton = document.getElementById('submitButton');
+
+        function showMessage(type, message) {
+            messageBox.className = `alert ${type === 'success' ? 'alert-success' : 'alert-danger'}`;
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+        }
+
+        async function loadTable() {
+            if (!isEditMode) {
+                pageTitle.textContent = 'เพิ่มโต๊ะใหม่';
+                return;
+            }
+
+            pageTitle.textContent = 'แก้ไขสถานะโต๊ะ';
+            tableIdGroup.style.display = 'block';
+
+            try {
+                const response = await fetch(`${TABLES_API}/${tableId}`);
+                if (!response.ok) {
+                    let errorMessage = 'ไม่สามารถโหลดข้อมูลโต๊ะได้';
+                    try {
+                        const errorBody = await response.json();
+                        errorMessage = errorBody.message || errorMessage;
+                    } catch (parseError) {
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const table = await response.json();
+                tableIdInput.value = table.tableId;
+                statusInput.value = table.status || '';
+            } catch (error) {
+                showMessage('error', error.message);
+                submitButton.disabled = true;
+            }
+        }
+
+        tableForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            messageBox.style.display = 'none';
+
+            const payload = {
+                status: statusInput.value
+            };
+
+            if (!payload.status) {
+                showMessage('error', 'กรุณาเลือกสถานะ');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'กำลังบันทึก...';
+
+            try {
+                const response = await fetch(isEditMode ? `${TABLES_API}/${tableId}` : TABLES_API, {
+                    method: isEditMode ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let errorMessage = 'บันทึกข้อมูลไม่สำเร็จ';
+                    try {
+                        const errorBody = await response.json();
+                        errorMessage = errorBody.message || errorMessage;
+                    } catch (parseError) {
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                window.location.href = '/tables';
+            } catch (error) {
+                showMessage('error', error.message);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'บันทึก';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadTable);
+    </script>
 </body>
 </html>
