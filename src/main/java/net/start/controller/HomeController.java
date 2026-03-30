@@ -63,6 +63,15 @@ public class HomeController {
     public String tablesEdit() {
         return "tables/form";
     }
+    @GetMapping("/promotions")
+    public String promotions() {
+        return "promotions/list";
+    }
+
+    @GetMapping("/promotions/new")
+    public String promotionNew() {
+        return "promotions/form";
+    }
 
     @GetMapping("/summary")
     public String summary() {
@@ -74,6 +83,11 @@ public class HomeController {
         return "summary/product_sales";
     }
 
+    @GetMapping("/promotions/edit/{id}")
+    public String promotionEdit() {
+        return "promotions/form";
+    }
+    
     @GetMapping("/payments/checkout/table/{id}")
     public String paymentCheckout(@PathVariable("id") Integer id, Model model) {
         model.addAttribute("tableId", id);
