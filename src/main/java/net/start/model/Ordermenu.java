@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -40,7 +41,7 @@ public class Ordermenu implements java.io.Serializable {
 	@Column(name = "totalAmount")
 	private BigDecimal totalAmount;
 
-	@JsonIgnore
+	@JsonManagedReference(value="order-details")
 	@OneToMany(mappedBy = "ordermenu", cascade = CascadeType.ALL)
 	private List<OrderDetail> orderDetails = new ArrayList<>();
 
