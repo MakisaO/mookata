@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import net.start.model.Coupon;
@@ -18,6 +20,10 @@ public class CouponService {
     // 1. ดึงคูปองทั้งหมด
     public List<Coupon> getAllCoupons() {
         return couponRepository.findAll();
+    }
+
+    public Page<Coupon> getAllCouponsPaginated(String code, String status, Pageable pageable) {
+        return couponRepository.findByCodeContainingAndStatusContaining(code, status, pageable);
     }
 
     // 2. ดึงคูปองด้วย ID
