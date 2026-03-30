@@ -1,88 +1,239 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ห้องครัว - Mookata</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <style>
-body { background-color: #f8f9fa; font-family: 'Kanit', sans-serif; }
-.ticket-card { border-radius: 12px; border-left: 5px solid; transition: transform 0.2s; }
-.ticket-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important; }
-.status-ordered { border-left-color: #dc3545; }
-.status-cooking { border-left-color: #ffc107; }
+body {
+	background-color: #f8f9fa;
+	font-family: 'Kanit', sans-serif;
+}
+
+.ticket-card {
+	border-radius: 12px;
+	border-left: 5px solid;
+	transition: transform 0.2s;
+}
+
+.ticket-card:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.status-ordered {
+	border-left-color: #dc3545;
+}
+
+.status-cooking {
+	border-left-color: #ffc107;
+}
 </style>
 </head>
 <body>
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>🔥 ห้องครัว (รายการออเดอร์)</h2>
-        <a th:href="@{/}" class="btn btn-outline-secondary">กลับหน้าหลัก</a>
-    </div>
-    
-    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
-    
-    <div class="row g-4">
-        <!-- Loop over each order round -->
-        <div class="col-12" th:each="entry : ${groupedOrders}">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-3">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
-                    <h4 class="mb-0 fw-bold">🍽️ โต๊ะ <span th:text="${entry.key.tables != null ? entry.key.tables.tableId : 'ไม่ระบุ'}">-</span></h4>
-                    <div class="d-flex align-items-center">
-                        <a th:href="@{/kitchen/mass-update/{id}(id=${entry.key.orderId})}" 
-                           class="btn btn-sm btn-outline-light me-3 px-3 fw-bold"
-                           onclick="return confirm('ยืนยันอัปเดตสถานะทุกรายการในบิลนี้?')"
-                           th:text="${massActionLabels[entry.key.orderId]}">
-                            🚀 อัปเดตสถานะทั้งหมด
-                        </a>
-                        <div class="text-end">
-                            <span class="badge bg-light text-dark fs-6 rounded-pill px-3 py-2 me-2">บิล #[[${entry.key.orderId}]]</span>
-                            <span class="fs-6 fw-bold"><i class="bi bi-clock"></i> สั่งเวลา: [[${#dates.format(entry.key.orderDate, 'HH:mm')}]]</span>
+	<div class="container py-4">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h2>🔥 ห้องครัว (รายการออเดอร์)</h2>
+			<a href="/" class="btn btn-outline-secondary">กลับหน้าหลัก</a>
+		</div>
+
+		<div id="alert-container"></div>
+
+		<div class="row g-4" id="orders-container">
+			<div class="col-12 text-center py-5">
+				<div class="spinner-border text-secondary" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="mt-2 text-muted">กำลังโหลดข้อมูล...</p>
+			</div>
+		</div>
+	</div>
+
+	<script>
+    // URL ของ API (ปรับให้ตรงกับ Server ของคุณ)
+    const API_BASE_URL = '/api/kitchen';
+
+    // ฟังก์ชันจัดรูปแบบเวลา
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ฟังก์ชันแสดงข้อความแจ้งเตือน
+    function showAlert(message, type = 'success') {
+        const alertBox = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        const container = document.getElementById('alert-container');
+        container.innerHTML = alertBox;
+        
+        // ให้แจ้งเตือนหายไปเองใน 3 วินาที
+        setTimeout(() => { container.innerHTML = ''; }, 3000);
+    }
+
+    // 1. ฟังก์ชันโหลดข้อมูล Dashboard
+    async function loadDashboard() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/dashboard`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            renderDashboard(data);
+        } catch (error) {
+            console.error('Error fetching dashboard:', error);
+            document.getElementById('orders-container').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <h4 class="text-danger">❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้</h4>
+                </div>
+            `;
+        }
+    }
+
+    // ฟังก์ชันวาดหน้าจอ (Render UI)
+    function renderDashboard(data) {
+        const container = document.getElementById('orders-container');
+        container.innerHTML = ''; // ล้างข้อมูลเก่า
+
+        if (!data.rounds || data.rounds.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <h3 class="text-muted mt-5">ไม่มีออเดอร์ค้าง ดื่มน้ำพักผ่อนได้ 🍵</h3>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.rounds.forEach(round => {
+            const orderId = round.orderMenu.orderId;
+            // เช็คการมีอยู่ของ tables ป้องกัน error หาก null
+            const tableId = round.orderMenu.tables ? round.orderMenu.tables.tableId : '-';
+            const orderTime = formatTime(round.orderMenu.orderDate);
+
+            // เริ่ม Card ของแต่ละโต๊ะ (แต่ละบิล)
+            html += `
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-3">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                        <h4 class="mb-0 fw-bold">🍽️ โต๊ะ ${tableId}</h4>
+                        <div class="d-flex align-items-center">
+                            <button onclick="massUpdateRound(${orderId})" class="btn btn-sm btn-outline-light me-3 px-3 fw-bold">
+                                🚀 ${round.massActionLabel}
+                            </button>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark fs-6 rounded-pill px-3 py-2 me-2">บิล #${orderId}</span>
+                                <span class="fs-6 fw-bold"><i class="bi bi-clock"></i> สั่งเวลา: ${orderTime}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-body bg-light" style="border: 1px solid #dee2e6; border-top: none;">
-                    <div class="row g-3">
-                        <!-- Loop over items in this round -->
-                        <div class="col-md-6 col-lg-4" th:each="item : ${entry.value}">
-                            <div class="card ticket-card shadow-sm h-100 bg-white" th:classappend="${item.itemStatus == 'ordered'} ? 'status-ordered' : 'status-cooking'">
-                                <div class="card-body d-flex flex-column">
-                                    <h4 class="card-title fw-bold text-dark my-2">
-                                        [[${item.product.productName}]] 
-                                        <span class="text-danger ms-2 fs-5">x[[${item.quantity}]]</span>
-                                    </h4>
-                                    
-                                    <!-- User Instructions based on status -->
-                                    <div class="mt-2 mb-3">
-                                        <div th:if="${item.itemStatus == 'ordered'}" class="text-danger small fw-bold">
-                                            <i class="bi bi-info-circle"></i> 🆕 ออเดอร์ใหม่: กรุณากดปุ่มเพื่อเริ่มทำอาหาร
+                    <div class="card-body bg-light" style="border: 1px solid #dee2e6; border-top: none;">
+                        <div class="row g-3">
+            `;
+
+            // ลูปรายการอาหารในบิลนั้น
+            round.items.forEach(item => {
+                const isOrdered = item.itemStatus === 'ordered';
+                const statusClass = isOrdered ? 'status-ordered' : 'status-cooking';
+                const productName = item.product ? item.product.productName : 'ไม่ระบุชื่อสินค้า';
+                
+                html += `
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card ticket-card shadow-sm h-100 bg-white ${statusClass}">
+                                    <div class="card-body d-flex flex-column">
+                                        <h4 class="card-title fw-bold text-dark my-2">
+                                            ${productName} 
+                                            <span class="text-danger ms-2 fs-5">x${item.quantity}</span>
+                                        </h4>
+                                        
+                                        <div class="mt-2 mb-3">
+                                            ${isOrdered 
+                                                ? `<div class="text-danger small fw-bold"><i class="bi bi-info-circle"></i> 🆕 ออเดอร์ใหม่: กรุณากดปุ่มเพื่อเริ่มทำอาหาร</div>`
+                                                : `<div class="text-warning small fw-bold" style="color: #856404 !important;"><i class="bi bi-info-circle"></i> 👨‍🍳 กำลังทำ: อาหารกำลังปรุง เมื่อเสร็จแล้วกรุณากดเพื่อแจ้งเสิร์ฟ</div>`
+                                            }
                                         </div>
-                                        <div th:if="${item.itemStatus == 'cooking'}" class="text-warning small fw-bold" style="color: #856404 !important;">
-                                            <i class="bi bi-info-circle"></i> 👨‍🍳 กำลังทำ: อาหารกำลังปรุง เมื่อเสร็จแล้วกรุณากดเพื่อแจ้งเสิร์ฟ
+                                        
+                                        <div class="d-flex gap-2 mt-auto pt-3 border-top pb-1 mt-3">
+                                            ${isOrdered
+                                                ? `<button onclick="updateItemStatus(${item.detailId}, 'cook')" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-dark">👨‍🍳 เริ่มทำอาหาร</button>`
+                                                : `<button onclick="updateItemStatus(${item.detailId}, 'serve')" class="btn btn-success w-100 fw-bold py-2 shadow-sm">🛎️ เสิร์ฟแล้ว</button>`
+                                            }
                                         </div>
-                                    </div>
-                                    
-                                    <div class="d-flex gap-2 mt-auto pt-3 border-top pb-1 mt-3">
-                                        <a th:if="${item.itemStatus == 'ordered'}" th:href="@{/kitchen/cook/{id}(id=${item.detailId})}" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-dark">👨‍🍳 เริ่มทำอาหาร</a>
-                                        <a th:if="${item.itemStatus == 'cooking'}" th:href="@{/kitchen/serve/{id}(id=${item.detailId})}" class="btn btn-success w-100 fw-bold py-2 shadow-sm">🛎️ เสิร์ฟแล้ว</a>
                                     </div>
                                 </div>
                             </div>
+                `;
+            });
+
+            html += `
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div th:if="${#maps.isEmpty(groupedOrders)}" class="col-12 text-center py-5">
-            <h3 class="text-muted mt-5">ไม่มีออเดอร์ค้าง ดื่มน้ำพักผ่อนได้ 🍵</h3>
-        </div>
-    </div>
-</div>
+            `;
+        });
 
-<script>
-    setTimeout(function(){
-       window.location.reload();
-    }, 15000); // Auto refresh every 15s to see new orders
+        container.innerHTML = html;
+    }
+
+    // 2. ฟังก์ชันอัปเดตสถานะ (รายจาน)
+    async function updateItemStatus(detailId, action) {
+        try {
+            // action จะเป็น 'cook' หรือ 'serve'
+            const response = await fetch(`${API_BASE_URL}/${action}/${detailId}`, {
+                method: 'PUT' // เปลี่ยนเป็น PUT ตามที่เราออกแบบ Controller ไว้
+            });
+            
+            if (!response.ok) throw new Error('Update failed');
+            
+            const result = await response.json();
+            showAlert(result.message, 'success');
+            
+            // รีโหลดข้อมูลใหม่ทันที
+            loadDashboard();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            showAlert('เกิดข้อผิดพลาดในการอัปเดตสถานะ', 'danger');
+        }
+    }
+
+    // 3. ฟังก์ชันอัปเดตสถานะ (ทั้งบิล)
+    async function massUpdateRound(orderId) {
+        if (!confirm('ยืนยันอัปเดตสถานะทุกรายการในบิลนี้?')) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/mass-update/${orderId}`, {
+                method: 'PUT'
+            });
+            
+            if (!response.ok) throw new Error('Mass update failed');
+            
+            const result = await response.json();
+            showAlert(result.message, 'success');
+            
+            // รีโหลดข้อมูลใหม่ทันที
+            loadDashboard();
+        } catch (error) {
+            console.error('Error mass updating:', error);
+            showAlert('เกิดข้อผิดพลาดในการอัปเดตทั้งหมด', 'danger');
+        }
+    }
+
+    // โหลดข้อมูลครั้งแรกเมื่อเปิดหน้าเว็บ
+    document.addEventListener("DOMContentLoaded", () => {
+        loadDashboard();
+        
+        // Auto refresh ทุก 15 วินาที (เรียก API ใหม่ โดยไม่กระตุกหน้าเว็บ)
+        setInterval(loadDashboard, 15000);
+    });
 </script>
 </body>
 </html>

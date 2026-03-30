@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="th">
 <head>
     <meta charset="UTF-8">
     <title>จัดการโต๊ะ - Mookata</title>
@@ -7,112 +7,187 @@
         body { font-family: 'Tahoma', sans-serif; padding: 30px; background-color: #f4f7f6; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; margin-bottom: 25px; }
-        
         .alert { padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; }
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        
         .btn-add { display: inline-block; padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 6px; margin-bottom: 25px; font-weight: bold; transition: background 0.3s; }
         .btn-add:hover { background-color: #45a049; }
-
         .table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        
         .table-card { border: 2px solid #eee; padding: 20px; border-radius: 12px; text-align: center; background: #fff; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
         .table-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        
         .table-card.available { border-color: #4CAF50; background-color: #f9fff9; }
         .table-card.unavailable { border-color: #f44336; background-color: #fffafa; }
         .table-card.maintenance { border-color: #6c757d; background-color: #f8f9fa; opacity: 0.8; }
         .table-card.reserved { border-color: #ffc107; background-color: #fffdf5; }
-        
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; margin: 10px 0; font-weight: bold; }
         .available .status-badge { background-color: #e8f5e9; color: #2e7d32; }
         .unavailable .status-badge { background-color: #ffebee; color: #c62828; }
         .maintenance .status-badge { background-color: #e9ecef; color: #495057; }
         .reserved .status-badge { background-color: #fff3cd; color: #856404; }
-        
         .button-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        
         .btn { display: block; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 14px; color: white; border: none; font-weight: 500; cursor: pointer; transition: opacity 0.2s; text-align: center; }
         .btn:hover { opacity: 0.9; }
-        
         .btn-order { background-color: #2196F3; }
         .btn-edit { background-color: #ff9800; }
         .btn-success { background-color: #4CAF50; }
-        .btn-reset { background-color: #6c757d; }
+        .btn-reset { background-color: #6c757d; width: 100%; }
         .btn-delete { background-color: #dc3545; font-size: 12px; padding: 5px; margin-top: 5px; }
-        
+        .btn-disabled { background-color: #adb5bd; cursor: not-allowed; }
         .footer { text-align: center; margin-top: 40px; }
         .footer a { color: #666; text-decoration: none; font-size: 14px; }
         .footer a:hover { text-decoration: underline; }
+        .loading, .empty-state { text-align: center; color: #666; padding: 30px 0; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>🍽️ โต๊ะในร้าน (Table Management)</h2>
-        
-        <!-- Flash Messages -->
+
         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-        
+        <div id="clientMessage" class="alert" style="display: none;"></div>
+
         <div style="text-align: right;">
-            <a th:href="@{/tables/new}" class="btn-add">+ เพิ่มโต๊ะใหม่</a>
+            <a href="/tables/new" class="btn-add">+ เพิ่มโต๊ะใหม่</a>
         </div>
 
-        <div class="table-grid">
-            <div class="table-card" th:each="t : ${tables}" 
-                 th:classappend="${t.status}">
-                
-                <h3 th:text="'โต๊ะ ' + ${t.tableId}" style="margin: 0; color: #333;">โต๊ะ 1</h3>
-                
-                <span class="status-badge">
-                    <span th:if="${t.status == 'available'}">● ว่าง</span>
-                    <span th:if="${t.status == 'unavailable'}">● มีลูกค้า</span>
-                    <span th:if="${t.status == 'maintenance'}">🛠️ ซ่อมบำรุง</span>
-                    <span th:if="${t.status == 'reserved'}">📅 จองแล้ว</span>
-                    <span th:if="${t.status != 'available' && t.status != 'unavailable' && t.status != 'maintenance' && t.status != 'reserved'}" th:text="${t.status}"></span>
-                </span>
-                
-                <div class="button-group">
-                    <!-- Order button (Disabled if maintenance) -->
-                    <a th:if="${t.status != 'maintenance'}" th:href="@{/orders/{id}(id=${t.tableId})}" class="btn btn-order">
-                        🛒 สั่งอาหาร
-                    </a>
-                    <button th:if="${t.status == 'maintenance'}" class="btn btn-secondary" disabled>
-                        🚫 ไม่พร้อมบริการ
-                    </button>
-
-                    <a th:href="@{/tables/edit/{id}(id=${t.tableId})}" class="btn btn-edit">
-                        ⚙️ จัดการสถานะ
-                    </a>
-
-                    <!-- Show Payment and Reset only if occupied -->
-                    <th:block th:if="${t.status == 'unavailable' || t.status == 'reserved'}">
-                        <a th:href="@{/payments/checkout/table/{id}(id=${t.tableId})}" class="btn btn-success">
-                            💸 ชำระเงิน
-                        </a>
-
-                        <form th:action="@{/payments/reset/{id}(id=${t.tableId})}" method="post" style="margin: 0;">
-                            <button type="submit" class="btn btn-reset" style="width: 100%;"
-                                    onclick="return confirm('ยืนยันการคืนโต๊ะ? (ใช้สำหรับกรณีที่ไม่มีรายการอาหาร หรือต้องการรีเซ็ตสถานะ)')">
-                                🔄 คืนโต๊ะว่าง
-                            </button>
-                        </form>
-                    </th:block>
-
-                    <!-- Delete Table Button (Only if not occupied) -->
-                    <a th:if="${t.status != 'unavailable'}" th:href="@{/tables/delete/{id}(id=${t.tableId})}" 
-                       class="btn btn-delete" 
-                       onclick="return confirm('❗ ยืนยันการลบโต๊ะนี้? ข้อมูลทั้งหมดของโต๊ะนี้จะถูกลบออกถาวร')">
-                        🗑️ ลบโต๊ะ
-                    </a>
-                </div>
-            </div>
+        <div id="tableGrid" class="table-grid">
+            <div class="loading">กำลังโหลดข้อมูลโต๊ะ...</div>
         </div>
-        
+
         <div class="footer">
-            <a th:href="@{/}">🏠 กลับหน้าหลัก</a>
+            <a href="/">🏠 กลับหน้าหลัก</a>
         </div>
     </div>
+
+    <script>
+        const TABLES_API = '/api/tables';
+        const tableGrid = document.getElementById('tableGrid');
+        const clientMessage = document.getElementById('clientMessage');
+
+        const statusLabels = {
+            available: '● ว่าง',
+            unavailable: '● มีลูกค้า',
+            maintenance: '🛠️ ซ่อมบำรุง',
+            reserved: '📌 จองแล้ว'
+        };
+
+        function showMessage(type, message) {
+            clientMessage.className = `alert ${type === 'success' ? 'alert-success' : 'alert-danger'}`;
+            clientMessage.textContent = message;
+            clientMessage.style.display = 'block';
+        }
+
+        function createTableCard(table) {
+            const card = document.createElement('div');
+            const status = table.status || '';
+            card.className = `table-card ${status}`;
+
+            const statusLabel = statusLabels[status] || status;
+            const canOrder = status !== 'maintenance';
+            const showPaymentActions = status === 'unavailable' || status === 'reserved';
+            const canDelete = status !== 'unavailable';
+
+            card.innerHTML = `
+                <h3 style="margin: 0; color: #333;">โต๊ะ ${table.tableId}</h3>
+                <span class="status-badge">${statusLabel}</span>
+                <div class="button-group">
+                    ${canOrder
+                        ? `<a href="/orders/${table.tableId}" class="btn btn-order">🛒 สั่งอาหาร</a>`
+                        : `<button class="btn btn-disabled" type="button" disabled>🚫 ไม่พร้อมบริการ</button>`}
+                    <a href="/tables/edit/${table.tableId}" class="btn btn-edit">⚙️ จัดการสถานะ</a>
+                    ${showPaymentActions ? `
+                        <a href="/payments/checkout/table/${table.tableId}" class="btn btn-success">💳 ชำระเงิน</a>
+                        <button type="button" class="btn btn-reset" onclick="resetTable(${table.tableId})" style="margin-top: 5px;">🔄 คืนโต๊ะว่าง</button>
+                    ` : ''}
+                    ${canDelete
+                        ? `<button type="button" class="btn btn-delete" data-delete-id="${table.tableId}">🗑️ ลบโต๊ะ</button>`
+                        : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        async function loadTables() {
+            tableGrid.innerHTML = '<div class="loading">กำลังโหลดข้อมูลโต๊ะ...</div>';
+
+            try {
+                const response = await fetch(TABLES_API);
+                if (!response.ok) {
+                    throw new Error('ไม่สามารถโหลดข้อมูลโต๊ะได้');
+                }
+
+                const tables = await response.json();
+                tableGrid.innerHTML = '';
+
+                if (!tables.length) {
+                    tableGrid.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูลโต๊ะ</div>';
+                    return;
+                }
+
+                tables.forEach((table) => {
+                    tableGrid.appendChild(createTableCard(table));
+                });
+            } catch (error) {
+                tableGrid.innerHTML = '<div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div>';
+                showMessage('error', error.message);
+            }
+        }
+
+        tableGrid.addEventListener('click', async (event) => {
+            const deleteButton = event.target.closest('[data-delete-id]');
+            if (!deleteButton) {
+                return;
+            }
+
+            const tableId = deleteButton.getAttribute('data-delete-id');
+            if (!confirm('ยืนยันการลบโต๊ะนี้? ข้อมูลของโต๊ะนี้จะถูกลบออกถาวร')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${TABLES_API}/${tableId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    let errorMessage = 'ลบโต๊ะไม่สำเร็จ';
+                    try {
+                        const errorBody = await response.json();
+                        errorMessage = errorBody.message || errorMessage;
+                    } catch (parseError) {
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                showMessage('success', `ลบโต๊ะ ${tableId} เรียบร้อยแล้ว`);
+                await loadTables();
+            } catch (error) {
+                showMessage('error', error.message);
+            }
+        });
+
+        async function resetTable(id) {
+            if (!confirm('ยืนยันการคืนโต๊ะ? (ใช้สำหรับกรณีที่ไม่มีรายการอาหาร หรือต้องการรีเซ็ตสถานะ)')) {
+                return;
+            }
+            try {
+                const response = await fetch('/api/payments/reset/' + id, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    throw new Error('ไม่สามารถคืนโต๊ะว่างได้');
+                }
+                const result = await response.json();
+                showMessage('success', result.message || 'คืนโต๊ะว่างสำเร็จแล้ว');
+                await loadTables();
+            } catch (error) {
+                showMessage('error', error.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadTables);
+    </script>
 </body>
 </html>

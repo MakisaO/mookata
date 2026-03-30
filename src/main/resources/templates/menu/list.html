@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <title>จัดการเมนูอาหาร - Mookata</title>
@@ -19,160 +19,45 @@
             <h2 class="text-2xl font-bold text-slate-800 flex items-center">
                 <i class="fa-solid fa-utensils mr-3 text-blue-600"></i> จัดการเมนูอาหาร
             </h2>
-            <a th:href="@{/menu/new}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm">
+            <a href="/menu/new" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm">
                 <i class="fa-solid fa-plus"></i> เพิ่มเมนูใหม่
             </a>
         </div>
 
-        <div class="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide">
-            <a th:href="@{/menu(keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}" 
-               class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200"
-               th:classappend="${activeCategoryId == null} ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'">
-                ทั้งหมด
-            </a>
-            
-            <th:block th:each="cat : ${categories}">
-                <a th:href="@{/menu(categoryId=${cat.categoriesId}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir})}"
-                   class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200"
-                   th:classappend="${activeCategoryId == cat.categoriesId} ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'"
-                   th:text="${cat.categoriesName}">
-                    ชื่อหมวดหมู่
-                </a>
-            </th:block>
+        <div class="flex overflow-x-auto gap-2 mb-6 pb-2 scrollbar-hide" id="categoriesContainer">
+            <!-- Categories rendered by JS -->
         </div>
 
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             
-            <div class="flex overflow-x-auto gap-2 pb-2 w-full md:w-auto scrollbar-hide">
-                <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, categoryId=${activeCategoryId}, sortField='productName', sortDir=${sortField == 'productName' ? reverseSortDir : 'asc'})}" 
-                   class="px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors"
-                   th:classappend="${sortField == 'productName'} ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'">
-                   เรียงตามชื่อ <i th:class="${sortField == 'productName' ? (sortDir == 'asc' ? 'fa-solid fa-arrow-up-a-z ml-1' : 'fa-solid fa-arrow-down-z-a ml-1') : 'fa-solid fa-sort ml-1'}"></i>
-                </a>
-                
-                <a th:href="@{/menu(page=${currentPage}, keyword=${keyword}, categoryId=${activeCategoryId}, sortField='productPrice', sortDir=${sortField == 'productPrice' ? reverseSortDir : 'asc'})}" 
-                   class="px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors"
-                   th:classappend="${sortField == 'productPrice'} ? 'bg-blue-50 text-blue-700 font-bold' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'">
-                   เรียงตามราคา <i th:class="${sortField == 'productPrice' ? (sortDir == 'asc' ? 'fa-solid fa-arrow-up-1-9 ml-1' : 'fa-solid fa-arrow-down-9-1 ml-1') : 'fa-solid fa-sort ml-1'}"></i>
-                </a>
+            <div class="flex overflow-x-auto gap-2 pb-2 w-full md:w-auto scrollbar-hide" id="sortContainer">
+                <!-- Sort buttons rendered by JS -->
             </div>
 
-            <form th:action="@{/menu}" method="get" id="searchForm" class="relative w-full md:w-72">
+            <div class="relative w-full md:w-72">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
-                <input type="text" name="keyword" id="searchInput" placeholder="ค้นหาชื่อเมนู..." th:value="${keyword}" 
+                <input type="text" id="searchInput" placeholder="ค้นหาชื่อเมนู..." 
                        class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none shadow-sm transition-all text-sm">
-                <input type="hidden" name="sortField" th:value="${sortField}">
-                <input type="hidden" name="sortDir" th:value="${sortDir}">
-                <input type="hidden" name="categoryId" th:value="${activeCategoryId}" th:if="${activeCategoryId != null}">
-            </form>
-        </div>
-
-        <div th:if="${totalItems > 0}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
-            <div th:each="p : ${products}" class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 relative group hover:shadow-md transition-all duration-200 hover:-translate-y-1">
-                
-                
-               <div class="text-4xl bg-slate-50 p-3 rounded-xl w-16 h-16 flex items-center justify-center border border-slate-100 shadow-inner">
-                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'สามชั้น') or #strings.containsIgnoreCase(p.productName, 'เบคอน')}">🥓</th:block>
-                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'สามชั้น') or #strings.containsIgnoreCase(p.productName, 'เบคอน')}">
-                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'กุ้ง')}">🦐</th:block>
-                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'กุ้ง')}">
-                            <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'หมึก')}">🦑</th:block>
-                            <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'หมึก')}">
-                                <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ไข่')}">🥚</th:block>
-                                <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ไข่')}">
-                                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ชีส')}">🧀</th:block>
-                                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ชีส')}">
-                                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ลูกชิ้น')}">🍢</th:block>
-                                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ลูกชิ้น')}">
-                                            <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'ข้าวโพด')}">🌽</th:block>
-                                            <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'ข้าวโพด')}">
-                                                <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'เห็ด')}">🍄</th:block>
-                                                <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'เห็ด')}">
-                                                    <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'น้ำแข็ง')}">🧊</th:block>
-                                                    <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'น้ำแข็ง')}">
-                                                        <th:block th:if="${#strings.containsIgnoreCase(p.productName, 'น้ำเปล่า')}">💧</th:block>
-                                                        <th:block th:unless="${#strings.containsIgnoreCase(p.productName, 'น้ำเปล่า')}">
-                                                            
-                                                            <th:block th:switch="${p.categories != null ? p.categories.categoriesName : ''}">
-                                                                <span th:case="'เนื้อสัตว์'">🥩</span> <span th:case="'อาหารทะเล'">🐟</span>
-                                                                <span th:case="'ของทานเล่น'">🧆</span>
-                                                                <span th:case="'ผัก'">🥬</span>
-                                                                <span th:case="'เส้น'">🍜</span>
-                                                                <span th:case="'เครื่องดื่ม'">🥤</span>
-                                                                <span th:case="'เซ็ต'">🥘</span>
-                                                                <span th:case="*">🍽️</span> </th:block>
-
-                                                        </th:block>
-                                                    </th:block>
-                                                </th:block>
-                                            </th:block>
-                                        </th:block>
-                                    </th:block>
-                                </th:block>
-                            </th:block>
-                        </th:block>
-                    </th:block>
-                </div>
-                
-                
-                <div class="flex-1">
-                    <h3 class="font-bold text-slate-800 text-lg leading-tight" th:text="${p.productName}">ชื่อเมนู</h3>
-                    <p class="text-sm text-slate-500 mt-0.5" th:text="${p.categories != null ? p.categories.categoriesName : '-'}">หมวดหมู่</p>
-                    
-                    <div class="flex items-center gap-2 mt-2">
-                        <p class="text-orange-600 font-bold text-lg">฿<span th:text="${#numbers.formatDecimal(p.productPrice, 1, 'COMMA', 2, 'POINT')}">69.00</span></p>
-                        
-                        <span th:if="${p.productStatus == 'available'}" class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">พร้อมขาย</span>
-                        <span th:if="${p.productStatus != 'available'}" class="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">สินค้าหมด</span>
-                    </div>
-                </div>
-
-                <div class="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a th:href="@{/menu/edit/{id}(id=${p.productId})}" class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors shadow-sm" title="แก้ไข">
-                        <i class="fa-solid fa-pen-to-square text-sm"></i>
-                    </a>
-                    <a th:href="@{/menu/delete/{id}(id=${p.productId})}" class="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-colors shadow-sm" onclick="return confirm('ยืนยันการลบเมนูนี้?');" title="ลบ">
-                        <i class="fa-solid fa-trash-can text-sm"></i>
-                    </a>
-                </div>
             </div>
         </div>
 
-        <div th:if="${totalItems == 0}" class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500 mt-4 shadow-sm">
+        <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Products rendered by JS -->
+        </div>
+
+        <div id="noDataMessage" style="display: none;" class="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500 mt-4 shadow-sm">
             <i class="fa-solid fa-box-open text-6xl mb-4 text-slate-200"></i>
             <p class="text-xl font-bold text-slate-700">ไม่พบรายการอาหาร</p>
             <p class="text-sm text-slate-400 mt-2">ลองเปลี่ยนคำค้นหา หรือเลือกหมวดหมู่อื่นดูอีกครั้ง</p>
-            <a th:href="@{/menu}" class="inline-block mt-4 text-blue-600 hover:underline text-sm font-medium">เคลียร์การค้นหาทั้งหมด</a>
+            <button onclick="clearSearch()" class="inline-block mt-4 text-blue-600 hover:underline text-sm font-medium">เคลียร์การค้นหาทั้งหมด</button>
         </div>
 
-        <div th:if="${totalPages > 1}" class="flex justify-center mt-12">
-            <ul class="flex items-center gap-2">
-                <li th:classappend="${currentPage == 1} ? 'opacity-50 pointer-events-none'">
-                    <a th:href="@{/menu(page=${currentPage - 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
-                       class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-                        <i class="fa-solid fa-chevron-left text-sm"></i>
-                    </a>
-                </li>
-                
-                <li th:each="i : ${#numbers.sequence(1, totalPages)}">
-                    <a th:href="@{/menu(page=${i}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
-                       th:text="${i}"
-                       th:class="${currentPage == i} ? 'flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl font-bold shadow-md transition-colors transform scale-105' : 'flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm'">
-                    </a>
-                </li>
-                
-                <li th:classappend="${currentPage == totalPages} ? 'opacity-50 pointer-events-none'">
-                    <a th:href="@{/menu(page=${currentPage + 1}, keyword=${keyword}, sortField=${sortField}, sortDir=${sortDir}, categoryId=${activeCategoryId})}" 
-                       class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-                        <i class="fa-solid fa-chevron-right text-sm"></i>
-                    </a>
-                </li>
-            </ul>
+        <div id="paginationContainer" class="flex justify-center mt-12">
+            <!-- Pagination rendered by JS -->
         </div>
 
         <div class="mt-12 border-t border-slate-200 pt-6">
-            <a th:href="@{/}" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium transition-colors bg-white px-5 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-sm">
+            <a href="/" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 font-medium transition-colors bg-white px-5 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-sm">
                 <i class="fa-solid fa-house text-sm"></i> กลับหน้าหลัก (Home)
             </a>
         </div>
@@ -180,22 +65,256 @@
     </div>
 
     <script>
-        let timeout = null;
-        const searchInput = document.getElementById('searchInput');
-        if(searchInput) {
-            // ดัน Cursor ไปอยู่ท้ายข้อความเสมอเวลาพิมพ์
-            const val = searchInput.value;
-            searchInput.focus();
-            searchInput.value = '';
-            searchInput.value = val;
+        let currentPage = 1;
+        let currentKeyword = '';
+        let currentSortField = 'productName';
+        let currentSortDir = 'asc';
+        let currentCategoryId = null; // null means "all"
+        let searchTimeout = null;
 
-            searchInput.addEventListener('input', function (e) {
-                clearTimeout(timeout);
-                timeout = setTimeout(function () {
-                    document.getElementById('searchForm').submit();
-                }, 400); // หน่วงเวลา 400ms ก่อนส่งค่าไปค้นหา
+        const API_BASE = '/api/menu';
+
+        async function fetchProducts() {
+            try {
+                let url = `${API_BASE}?page=${currentPage}&keyword=${currentKeyword}&sortField=${currentSortField}&sortDir=${currentSortDir}`;
+                if (currentCategoryId !== null && currentCategoryId !== '') {
+                    url += `&categoryId=${currentCategoryId}`;
+                }
+                const response = await fetch(url);
+                const data = await response.json();
+
+                renderCategories(data.categories, data.activeCategoryId);
+                renderSortButtons();
+                renderGrid(data.products);
+                renderPagination(data.totalPages, data.currentPage);
+
+                document.getElementById('productGrid').style.display = data.products.length === 0 ? 'none' : 'grid';
+                document.getElementById('noDataMessage').style.display = data.products.length === 0 ? 'block' : 'none';
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productGrid').innerHTML = '<div class="col-span-full text-center text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>';
+            }
+        }
+
+        function getEmojiForProduct(name) {
+            name = name.toLowerCase();
+            if (name.includes('สามชั้น') || name.includes('เบคอน')) return '🥓';
+            if (name.includes('กุ้ง')) return '🦐';
+            if (name.includes('หมึก')) return '🦑';
+            if (name.includes('ไข่')) return '🥚';
+            if (name.includes('ชีส')) return '🧀';
+            if (name.includes('ลูกชิ้น')) return '🍢';
+            if (name.includes('ข้าวโพด')) return '🌽';
+            if (name.includes('เห็ด')) return '🍄';
+            if (name.includes('น้ำแข็ง')) return '🧊';
+            if (name.includes('น้ำเปล่า')) return '💧';
+            return null; // fallback to category
+        }
+        
+        function getEmojiForCategory(catName) {
+            if (!catName) return '🍽️';
+            switch (catName) {
+                case 'เนื้อสัตว์': return '🥩';
+                case 'อาหารทะเล': return '🐟';
+                case 'ของทานเล่น': return '🧆';
+                case 'ผัก': return '🥬';
+                case 'เส้น': return '🍜';
+                case 'เครื่องดื่ม': return '🥤';
+                case 'เซ็ต': return '🥘';
+                default: return '🍽️';
+            }
+        }
+
+        function renderGrid(products) {
+            const container = document.getElementById('productGrid');
+            container.innerHTML = '';
+
+            products.forEach(p => {
+                const catName = p.categories ? p.categories.categoriesName : '-';
+                const isAvailable = p.productStatus === 'available';
+                
+                let emoji = getEmojiForProduct(p.productName);
+                if (!emoji) {
+                    emoji = getEmojiForCategory(catName);
+                }
+
+                const priceFormatted = Number(p.productPrice).toLocaleString('th-TH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                const statusHtml = isAvailable 
+                    ? `<span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">พร้อมขาย</span>`
+                    : `<span class="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full border border-rose-200">สินค้าหมด</span>`;
+
+                const html = `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4 relative group hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+                    <div class="text-4xl bg-slate-50 p-3 rounded-xl w-16 h-16 flex items-center justify-center border border-slate-100 shadow-inner">
+                        ${emoji}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-slate-800 text-lg leading-tight truncate">${p.productName}</h3>
+                        <p class="text-sm text-slate-500 mt-0.5">${catName}</p>
+                        
+                        <div class="flex items-center gap-2 mt-2">
+                            <p class="text-orange-600 font-bold text-lg">฿<span>${priceFormatted}</span></p>
+                            ${statusHtml}
+                        </div>
+                    </div>
+
+                    <div class="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a href="/menu/edit/${p.productId}" class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors shadow-sm" title="แก้ไข">
+                            <i class="fa-solid fa-pen-to-square text-sm"></i>
+                        </a>
+                        <button onclick="deleteMenu(${p.productId})" class="w-8 h-8 flex items-center justify-center bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-colors shadow-sm" title="ลบ">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += html;
             });
         }
+        
+        async function deleteMenu(id) {
+            if(!confirm('ยืนยันการลบเมนูนี้?')) return;
+            try {
+                const res = await fetch(`/api/menu/${id}`, { method: 'DELETE' });
+                if(res.ok) fetchProducts();
+                else alert('ลบไม่สำเร็จ');
+            } catch(e) { alert('เกิดข้อผิดพลาด'); }
+        }
+
+        function renderCategories(categories, activeId) {
+            const container = document.getElementById('categoriesContainer');
+            let html = `
+                <button onclick="changeCategory(null)" 
+                   class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${(activeId == null || activeId == '') ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
+                    ทั้งหมด
+                </button>
+            `;
+            if (categories) {
+                categories.forEach(cat => {
+                    const isActive = (activeId == cat.categoriesId);
+                    html += `
+                    <button onclick="changeCategory(${cat.categoriesId})" 
+                       class="px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${isActive ? 'bg-slate-800 text-white shadow-md transform scale-105' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
+                        ${cat.categoriesName}
+                    </button>
+                    `;
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        function renderSortButtons() {
+            const container = document.getElementById('sortContainer');
+            
+            // Name Button
+            const isNameSort = (currentSortField === 'productName');
+            const nameDirClass = isNameSort ? (currentSortDir === 'asc' ? 'fa-solid fa-arrow-up-a-z ml-1' : 'fa-solid fa-arrow-down-z-a ml-1') : 'fa-solid fa-sort ml-1';
+            const nameBtnClass = isNameSort ? 'bg-blue-50 text-blue-700 font-bold px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors' : 'px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+
+            // Price Button
+            const isPriceSort = (currentSortField === 'productPrice');
+            const priceDirClass = isPriceSort ? (currentSortDir === 'asc' ? 'fa-solid fa-arrow-up-1-9 ml-1' : 'fa-solid fa-arrow-down-9-1 ml-1') : 'fa-solid fa-sort ml-1';
+            const priceBtnClass = isPriceSort ? 'bg-blue-50 text-blue-700 font-bold px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors' : 'px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+
+            container.innerHTML = `
+                <button onclick="changeSort('productName')" class="${nameBtnClass}">
+                   เรียงตามชื่อ <i class="${nameDirClass}"></i>
+                </button>
+                <button onclick="changeSort('productPrice')" class="${priceBtnClass}">
+                   เรียงตามราคา <i class="${priceDirClass}"></i>
+                </button>
+            `;
+        }
+
+        function renderPagination(totalPages, activePage) {
+            const container = document.getElementById('paginationContainer');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<ul class="flex items-center gap-2">';
+            
+            // Prev
+            html += `
+                <li class="${activePage === 1 ? 'opacity-50 pointer-events-none' : ''}">
+                    <button onclick="goToPage(${activePage - 1})" class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                        <i class="fa-solid fa-chevron-left text-sm"></i>
+                    </button>
+                </li>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btnClass = activePage === i 
+                    ? 'flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl font-bold shadow-md transition-colors transform scale-105'
+                    : 'flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm';
+                
+                html += `
+                    <li>
+                        <button onclick="goToPage(${i})" class="${btnClass}">${i}</button>
+                    </li>
+                `;
+            }
+
+            // Next
+            html += `
+                <li class="${activePage === totalPages ? 'opacity-50 pointer-events-none' : ''}">
+                    <button onclick="goToPage(${activePage + 1})" class="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                        <i class="fa-solid fa-chevron-right text-sm"></i>
+                    </button>
+                </li>
+            `;
+
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        // Action Handlers
+        function changeCategory(catId) {
+            currentCategoryId = catId;
+            currentPage = 1;
+            fetchProducts();
+        }
+
+        function changeSort(field) {
+            if (currentSortField === field) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortField = field;
+                currentSortDir = 'asc';
+            }
+            currentPage = 1;
+            fetchProducts();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            fetchProducts();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentKeyword = '';
+            currentCategoryId = null;
+            currentPage = 1;
+            fetchProducts();
+        }
+
+        // Debounce Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentKeyword = e.target.value;
+                currentPage = 1;
+                fetchProducts();
+            }, 300);
+        });
+
+        // Load initially
+        document.addEventListener('DOMContentLoaded', fetchProducts);
     </script>
 </body>
 </html>
