@@ -20,7 +20,7 @@
         }
 
         .header-bg {
-            background: linear-gradient(135deg, #1976D2, #2196F3);
+            background: linear-gradient(135deg, #059669, #10b981);
             color: white;
             border-radius: 15px 15px 0 0;
         }
@@ -102,12 +102,22 @@
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <h6 class="text-muted mb-1">ยอดสุทธิที่ต้องชำระ:</h6>
-                                    <h3 class="text-primary fw-bold text-end" id="final-total">0.00 บาท</h3>
+                                    <h3 class="text-emerald-600 fw-bold text-end" id="final-total">0.00 บาท</h3>
                                 </div>
                             </div>
 
-                            <button class="btn btn-success btn-lg w-100 py-3 fw-bold mb-3" type="button" onclick="confirmPayment()" id="btn-pay" disabled>
-                                💸 ชำระเงินสำเร็จ
+                            <!-- Partner Rewards Section -->
+                            <div id="partner-rewards-block" class="mb-4" style="display: none;">
+                                <h6 class="text-muted mb-2 small font-bold flex align-items-center">
+                                    <i class="fa-solid fa-gift me-1 text-emerald-500"></i> สิทธิพิเศษจากร้านไอติม (ลุ้นรับฟรี1สิทธิ์!)
+                                </h6>
+                                <div id="partner-rewards-list" class="small">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+
+                            <button class="btn btn-success btn-lg w-100 py-3 fw-bold mb-3 shadow-sm border-0" type="button" onclick="confirmPayment()" id="btn-pay" disabled style="background-color: #059669;">
+                                💸 ยืนยันชำระเงิน
                             </button>
                             <a href="/tables" class="btn btn-outline-secondary w-100 py-2">กลับไปหน้าจัดการร้าน</a>
                         </div>
@@ -213,6 +223,33 @@
             // 5. อัปเดตยอดสุทธิ
             currentFinalTotal = data.finalTotal;
             document.getElementById('final-total').innerText = data.finalTotal + " บาท";
+
+            // 6. จัดการโปรโมชั่นร้านเพื่อน (Dynamic Mapping)
+            if (data.partnerPromotions && data.partnerPromotions.length > 0) {
+                const partnerBlock = document.getElementById('partner-rewards-block');
+                const partnerList = document.getElementById('partner-rewards-list');
+                partnerBlock.style.display = 'block';
+                
+                let html = '';
+                data.partnerPromotions.forEach(p => {
+                    const remaining = p.ourMinAmount - data.finalTotal;
+                    if (remaining <= 0) {
+                        html += `
+                            <div class="alert alert-warning py-2 mb-2 border-0 bg-warning bg-opacity-10 text-dark" style="font-size: 0.85rem;">
+                                <i class="fa-solid fa-star text-warning me-1"></i> <b>คุณมีสิทธิ์ได้รับ:</b> ${p.name}
+                            </div>`;
+                    } else {
+                        html += `
+                            <div class="p-2 mb-2 bg-light rounded-2 border-start border-4 border-emerald-400" style="font-size: 0.85rem;">
+                                <span class="text-muted">สั่งอีก <b class="text-emerald-600">${remaining.toFixed(2)}.-</b> เพื่อลุ้น:</span><br>
+                                <span class="text-dark fw-medium">${p.name}</span>
+                            </div>`;
+                    }
+                });
+                partnerList.innerHTML = html;
+            } else {
+                document.getElementById('partner-rewards-block').style.display = 'none';
+            }
         }
 
         function confirmPayment() {
@@ -249,12 +286,31 @@
                         }
 
                         // สำเร็จ
+                        let successText = resultData.message;
+                        let successIcon = 'success';
+                        let successTitle = 'ชำระเงินสำเร็จ!';
+                        
+                        if (resultData.partnerCoupon) {
+                            successTitle = 'ยินดีด้วย! คุณได้รับคูปองพิเศษ';
+                            const coupon = resultData.partnerCoupon;
+                            successText = `
+                                <div class="text-center">
+                                    <p class="mb-3">${resultData.message}</p>
+                                    <div class="bg-emerald-50 border-2 border-emerald-500 border-dashed p-4 rounded-3">
+                                        <p class="text-emerald-800 fw-bold mb-1">คูปองร้านไอติม: ${coupon.promotionName}</p>
+                                        <h2 class="text-emerald-600 fw-bold mb-0" style="letter-spacing: 2px;">${coupon.code}</h2>
+                                    </div>
+                                    <p class="mt-3 text-muted small">นำรหัสนี้ไปแสดงที่ร้านไอติมเพื่อรับสิทธิ์เลยย!</p>
+                                </div>
+                            `;
+                        }
+
                         await Swal.fire({
-                            icon: 'success',
-                            title: 'สำเร็จ!',
-                            text: resultData.message,
-                            timer: 2000,
-                            showConfirmButton: false
+                            icon: successIcon,
+                            title: successTitle,
+                            html: successText,
+                            confirmButtonText: 'กลับหน้าหลัก',
+                            confirmButtonColor: '#059669'
                         });
                         
                         window.location.href = '/tables';
