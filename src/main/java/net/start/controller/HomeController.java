@@ -2,23 +2,24 @@ package net.start.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
-@Controller // สำคัญ: ต้องใช้ @Controller เพื่อคืนค่าเป็นหน้า View (HTML)
+@Controller
 public class HomeController {
 
-    @GetMapping("/") // เข้าหน้าแรกด้วย URL: http://localhost:8080/
+    // ================= HOME =================
+    @GetMapping("/")
     public String index() {
         return "index";
     }
 
-    // เพิ่มหน้าต่างสำหรับเข้าหน้า Kitchen Dashboard
+    // ================= KITCHEN =================
     @GetMapping("/kitchen")
     public String kitchen() {
-        return "kitchen/dashboard"; // ดึงไฟล์จาก src/main/resources/templates/kitchen/dashboard.html
+        return "kitchen/dashboard";
     }
 
+    // ================= MENU =================
     @GetMapping("/menu")
     public String menuList() {
         return "menu/list";
@@ -30,25 +31,30 @@ public class HomeController {
     }
 
     @GetMapping("/menu/edit/{id}")
-    public String menuEdit() {
+    public String menuEdit(@PathVariable("id") int id, Model model) {
+        model.addAttribute("menuId", id);
         return "menu/form";
     }
 
+    // ================= ORDERS =================
     @GetMapping("/orders/history")
     public String orderHistory() {
         return "orders/history";
     }
 
     @GetMapping("/orders/history/{id}")
-    public String orderDetail() {
+    public String orderDetail(@PathVariable("id") int id, Model model) {
+        model.addAttribute("orderId", id);
         return "orders/detail";
     }
 
     @GetMapping("/orders/{id}")
-    public String orderForm() {
-        return "orders/form"; // ดึงไฟล์จาก src/main/resources/templates/orders/form.html
+    public String orderForm(@PathVariable("id") int id, Model model) {
+        model.addAttribute("orderId", id);
+        return "orders/form";
     }
 
+    // ================= TABLES =================
     @GetMapping("/tables")
     public String tablesList() {
         return "tables/list";
@@ -60,9 +66,12 @@ public class HomeController {
     }
 
     @GetMapping("/tables/edit/{id}")
-    public String tablesEdit() {
+    public String tablesEdit(@PathVariable("id") int id, Model model) {
+        model.addAttribute("tableId", id);
         return "tables/form";
     }
+
+    // ================= PROMOTIONS =================
     @GetMapping("/promotions")
     public String promotions() {
         return "promotions/list";
@@ -74,10 +83,12 @@ public class HomeController {
     }
 
     @GetMapping("/promotions/edit/{id}")
-    public String promotionEdit() {
+    public String promotionEdit(@PathVariable("id") int id, Model model) {
+        model.addAttribute("promotionId", id);
         return "promotions/form";
     }
-    
+
+    // ================= PAYMENTS =================
     @GetMapping("/payments/checkout/table/{id}")
     public String paymentCheckout(@PathVariable("id") Integer id, Model model) {
         model.addAttribute("tableId", id);
