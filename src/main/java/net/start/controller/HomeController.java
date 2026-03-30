@@ -82,6 +82,11 @@ public class HomeController {
         return "promotions/form";
     }
 
+    @GetMapping("/promotions/coupons")
+    public String couponManagement() {
+        return "promotions/coupons";
+    }
+
     @GetMapping("/summary")
     public String summary() {
         return "summary";
