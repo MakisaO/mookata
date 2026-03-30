@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @ComponentScan("net.start")
-@EnableJpaRepositories(basePackages ="net.start.repository")
+@EnableJpaRepositories(basePackages ="net.start.repository")	
 @EntityScan("net.start.model")
 
 public class StartApplication {
