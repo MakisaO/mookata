@@ -1,6 +1,7 @@
 package net.start.model;
 
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +21,7 @@ public class OrderDetail implements java.io.Serializable {
 	@Column(name = "detail_id")
 	private Integer detailId;
 
+	@JsonIgnore
 	@ManyToOne
 	@JoinColumn(name = "order_id")
 	private Ordermenu ordermenu;
